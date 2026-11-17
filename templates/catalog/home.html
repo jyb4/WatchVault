@@ -1,13 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero">
-  <p class="eyebrow">CURATED TV DISCOVERY</p>
-  <h1>Your next great show is in the vault.</h1>
-  <p>Discover editor-approved TV shows, save your favorites, and soon get catalog-grounded recommendations from the AI Guide.</p>
-  <a href="{% url 'show-list' %}">Browse shows</a>
-</section>
-<section class="section" aria-labelledby="featured-heading">
-  <h2 id="featured-heading">Featured shows</h2>
-  {% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<h3>{{ show.title }}</h3></a><p>{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p></article>{% endfor %}</div>{% else %}<p class="empty-state">The first curated shows will appear here soon.</p>{% endif %}
-</section>
+{% if featured %}<section class="hero"{% if featured.poster_url %} style="--hero-image: url('{{ featured.poster_url }}')"{% endif %}><div class="hero-copy"><p class="eyebrow">CURATED TV DISCOVERY</p><h1>Find your next<br><span>obsession.</span></h1><p class="hero-intro">Discover, track, and build a watchlist around the shows you’ll love—from big adventures to hidden gems.</p><div class="hero-chips">{% for genre in featured.genres.all %}<span>{{ genre.name }}</span>{% endfor %}</div><div class="hero-actions"><a class="button primary" href="{{ featured.get_absolute_url }}">Explore featured</a><a class="button secondary" href="{% url 'show-list' %}">Browse all shows</a></div></div><article class="featured-card"><p class="eyebrow">FEATURED SHOW</p><h2>{{ featured.title }}</h2><p class="featured-meta">{% for genre in featured.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p><p>{{ featured.synopsis|truncatechars:190 }}</p>{% if featured.external_rating %}<p class="rating">★ {{ featured.external_rating }}/10</p>{% endif %}</article></section>{% else %}<section class="hero empty-hero"><p class="eyebrow">WATCHVAULT</p><h1>The vault is opening.</h1><p>Add the first TV shows in Django Admin to begin curating.</p></section>{% endif %}
+<section class="rail-section"><div class="section-heading"><div><p class="eyebrow">EDITORIAL PICKS</p><h2>Trending now</h2></div><a href="{% url 'show-list' %}">See all →</a></div>{% include "catalog/partials/show_rail.html" with shows=trending %}</section>
+<section class="rail-section"><div class="section-heading"><div><p class="eyebrow">DEEPER IN THE VAULT</p><h2>More to explore</h2></div><a href="{% url 'show-list' %}">See all →</a></div>{% include "catalog/partials/show_rail.html" with shows=more_to_explore %}</section>
+<section class="ai-guide"><div><p class="eyebrow">COMING SOON</p><h2>Ask the AI Guide</h2></div><p>Tell WatchVault the kind of story you’re in the mood for. Recommendations will always link back to shows in this catalog.</p><a class="button secondary" href="{% url 'show-list' %}">Explore the catalog</a></section>
 {% endblock %}

@@ -1,9 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Discover | WatchVault{% endblock %}
 {% block content %}
-<section class="section">
-<p class="eyebrow">THE CATALOG</p><h1>Discover shows</h1>
-<form class="search-form" method="get"><label for="q">Search the catalog</label><input id="q" name="q" value="{{ request.GET.q }}" placeholder="Search by title"><button type="submit">Search</button></form>
-{% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<h2>{{ show.title }}</h2></a><p>{% if show.external_rating %}★ {{ show.external_rating }}/10{% endif %}</p></article>{% endfor %}</div>{% else %}<p class="empty-state">No published shows match that search.</p>{% endif %}
-</section>
+<section class="catalog-page"><p class="eyebrow">THE CATALOG</p><h1>Discover your next show.</h1><form class="search-form" method="get"><label for="q">Search WatchVault</label><div><input id="q" name="q" value="{{ query }}" placeholder="Search titles, genres, networks, and descriptions"><button type="submit">Search</button></div></form>{% if query %}<p class="result-summary">Results for “{{ query }}”</p>{% endif %}{% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<div class="card-body"><h2>{{ show.title }}</h2><p class="card-genres">{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% if show.external_rating %}<p class="rating">★ {{ show.external_rating }}/10</p>{% endif %}</div></a></article>{% endfor %}</div>{% else %}<p class="empty-state">No published shows match that search. Try a title, genre, network, or a broader phrase.</p>{% endif %}</section>
 {% endblock %}

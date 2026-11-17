@@ -13,6 +13,7 @@
     <nav aria-label="Primary navigation">
       <a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
       <a href="{% url 'show-list' %}">Discover</a>
+      <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search shows, genres, people…"></form>
       {% if user.is_authenticated %}
         <a href="{% url 'watchlist' %}">My Watchlist</a>
         <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>

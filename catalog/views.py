@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
@@ -8,10 +9,18 @@ from .models import Show, WatchlistItem
 
 class HomeView(ListView):
     template_name = "catalog/home.html"
-    context_object_name = "shows"
+    context_object_name = "featured_shows"
 
     def get_queryset(self):
-        return Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres")[:6]
+        return Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres").order_by("-external_rating", "title")[:17]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        shows = list(context["featured_shows"])
+        context["featured"] = shows[0] if shows else None
+        context["trending"] = shows[1:9]
+        context["more_to_explore"] = shows[9:17]
+        return context
 
 
 class ShowListView(ListView):
@@ -22,8 +31,13 @@ class ShowListView(ListView):
         shows = Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres")
         query = self.request.GET.get("q", "").strip()
         if query:
-            shows = shows.filter(title__icontains=query)
-        return shows
+            shows = shows.filter(Q(title__icontains=query) | Q(synopsis__icontains=query) | Q(network__icontains=query) | Q(genres__name__icontains=query)).distinct()
+        return shows.order_by("-external_rating", "title")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["query"] = self.request.GET.get("q", "").strip()
+        return context
 
 
 class ShowDetailView(DetailView):
