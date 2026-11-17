@@ -117,8 +117,12 @@ Do not remove a working fallback until the new release has been verified.
 
 - **Address:** `https://jybdeployment.com`
 - **Initial WatchVault production release:** 2026-11-17
-- **Catalog seed:** `Severance` from TVmaze, published
+- **Catalog:** 18 published TVmaze shows in the initial discovery collection
 - **Public verification:** homepage and hashed stylesheet both returned HTTP 200 through Caddy
+
+## 10.1 Discovery interface
+
+The homepage uses a cinematic featured-show hero, horizontal editorial discovery rows, a persistent catalog search, and a future-facing AI Guide entry point. Search matches published titles, genres, networks, and show descriptions. The visual direction is intentionally poster-first and dark, with a WatchVault-specific gold accent rather than a copy of any reference product.
 
 ## 11. Next milestones
 
