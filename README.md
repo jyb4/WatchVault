@@ -27,7 +27,7 @@ WatchVault uses [TVmaze's REST API](https://www.tvmaze.com/api) as its TV-only c
 docker compose exec web python manage.py import_tvmaze "The Bear"
 ```
 
-Review the imported profile in Django Admin and publish it only when it is ready. TVmaze allows free use with attribution and ShareAlike requirements; WatchVault keeps the TVmaze source URL and displays site attribution.
+Review the imported profile in Django Admin and publish it only when it is ready. For a deliberate demo import, add `--publish`. TVmaze allows free use with attribution and ShareAlike requirements; WatchVault keeps the TVmaze source URL and displays site attribution.
 
 ## Documentation
 

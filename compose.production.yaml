@@ -7,8 +7,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    volumes:
-      - staticfiles:/app/staticfiles
+    ports:
+      - "127.0.0.1:${HOSTED_PORT:-8080}:8000"
 
   db:
     image: pgvector/pgvector:pg16
@@ -22,23 +22,5 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  caddy:
-    image: caddy:2-alpine
-    depends_on:
-      - web
-    env_file: .env.production
-    ports:
-      - "80:80"
-      - "443:443"
-    restart: unless-stopped
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - staticfiles:/srv/static:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
 volumes:
   postgres_data:
-  staticfiles:
-  caddy_data:
-  caddy_config:

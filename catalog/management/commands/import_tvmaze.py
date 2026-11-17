@@ -25,10 +25,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("query", help="TV show title to search for")
         parser.add_argument("--tvmaze-id", type=int, help="Import a known TVmaze show ID instead of searching")
+        parser.add_argument("--publish", action="store_true", help="Publish the imported show after saving it")
 
     def handle(self, *args, **options):
         show_data = self.fetch_show(options["query"], options.get("tvmaze_id"))
-        show, created = self.save_show(show_data)
+        show, created = self.save_show(show_data, publish=options["publish"])
         action = "Imported" if created else "Updated"
         self.stdout.write(self.style.SUCCESS(f"{action} draft: {show.title} (TVmaze #{show.source_id})"))
 
@@ -56,7 +57,7 @@ class Command(BaseCommand):
             raise CommandError(f"No TVmaze show matched '{query}'.")
         return matches[0]["show"]
 
-    def save_show(self, data):
+    def save_show(self, data, publish=False):
         premiered = data.get("premiered")
         try:
             premiered_on = date.fromisoformat(premiered) if premiered else None
@@ -76,7 +77,7 @@ class Command(BaseCommand):
             "network": network,
             "source_url": (data.get("url") or ""),
             "import_updated_at": timezone.now(),
-            "status": Show.Status.DRAFT,
+            "status": Show.Status.PUBLISHED if publish else Show.Status.DRAFT,
         }
         show, created = Show.objects.update_or_create(source_name="TVmaze", source_id=source_id, defaults=defaults)
         show.genres.set([Genre.objects.get_or_create(name=name, defaults={"slug": slugify(name)})[0] for name in data.get("genres", [])])

@@ -8,7 +8,7 @@ This document is the project’s single source of truth for progress, decisions,
 - **Purpose:** A self-hosted, multi-user TV-show discovery CMS with personal watchlists and a future catalog-grounded AI Guide.
 - **Primary stack:** Django, PostgreSQL, pgvector, Docker Compose; Neo4j is an optional later graph-service profile.
 - **Catalog source:** [TVmaze API](https://www.tvmaze.com/api)
-- **Planned production address:** `watchvault.jybdeployment.com` (keeps the existing root-domain site online)
+- **Production address:** `jybdeployment.com` (replaces the existing placeholder container behind the active Caddy route)
 - **Original prototype:** PHP project retained outside this folder for reference only.
 
 ## Product decisions
@@ -62,7 +62,7 @@ This document is the project’s single source of truth for progress, decisions,
 5. Import and review a small set of TV shows in Django Admin.
 6. Add account registration and catalog filters.
 7. Before server deployment, copy `.env.production.example` to `.env.production` on the server and replace its example secrets.
-8. Create the `watchvault.jybdeployment.com` DNS record before deploying; do not replace the active root-domain site without a deliberate migration plan.
+8. Deploy to port 8090 and verify locally on the server before switching WatchVault to the active port 8080.
 
 ## Evidence and verification
 
