@@ -31,7 +31,8 @@ class Command(BaseCommand):
         show_data = self.fetch_show(options["query"], options.get("tvmaze_id"))
         show, created = self.save_show(show_data, publish=options["publish"])
         action = "Imported" if created else "Updated"
-        self.stdout.write(self.style.SUCCESS(f"{action} draft: {show.title} (TVmaze #{show.source_id})"))
+        state = "published" if show.status == Show.Status.PUBLISHED else "draft"
+        self.stdout.write(self.style.SUCCESS(f"{action} {state}: {show.title} (TVmaze #{show.source_id})"))
 
     def fetch_json(self, path, parameters=None):
         query = f"?{urlencode(parameters, doseq=True)}" if parameters else ""

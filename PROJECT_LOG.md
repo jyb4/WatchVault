@@ -28,13 +28,13 @@ This document is the project’s single source of truth for progress, decisions,
 | --- | --- | --- |
 | 1. Strategy and information architecture | Project brief, roles, sitemap, user journeys | Complete |
 | 2. Development foundation | Django structure, Docker Compose, PostgreSQL/pgvector, Git repository | Complete; Docker Desktop has a startup error, so runtime verification is blocked locally |
-| 3. Catalog CMS | Show/genre models, editorial statuses, Django Admin | In progress |
-| 4. TVmaze import | Search-by-title import command, validation, attribution | In progress |
+| 3. Catalog CMS | Show/genre models, editorial statuses, Django Admin | In progress — deployed catalog is live |
+| 4. TVmaze import | Search-by-title import command, validation, attribution | In progress — live catalog seeded with a published show |
 | 5. Member experience | Responsive design, registration, add/remove watchlist, filters | In progress — responsive UI and watchlist mutations added |
 | 6. Semantic retrieval | Chunking, embeddings, pgvector search | Not started |
 | 7. Graph discovery | People/show/genre relationship graph and related shows | Not started |
 | 8. RAG AI Guide | Source-linked, catalog-only answers | Not started |
-| 9. Operations | Automated tests, GitHub Actions, server deployment, HTTPS, backups, analytics | In progress — CI and Docker/Caddy deployment configuration added |
+| 9. Operations | Automated tests, GitHub Actions, server deployment, HTTPS, backups, analytics | In progress — live deployment verified through Caddy HTTPS |
 
 ## Current implementation
 
@@ -44,6 +44,7 @@ This document is the project’s single source of truth for progress, decisions,
 - `python manage.py import_tvmaze "Show Name"` imports the closest TVmaze search result as a **draft**.
 - The importer handles empty searches, network errors, HTTP failures, and rate limiting. It does not store an API key because the public TVmaze endpoints used here do not require one.
 - The project now has a production Compose configuration, Caddy HTTPS reverse proxy, environment template, deployment runbook, and GitHub Actions test workflow.
+- WatchVault replaced the prior placeholder container on `jybdeployment.com` after a separate port-8090 staging check. The stopped `jyb-prod` container is retained on the server as a rollback option.
 
 ## TVmaze integration rules
 
@@ -73,3 +74,5 @@ This document is the project’s single source of truth for progress, decisions,
 | Docker Desktop runtime | Blocked | Docker Desktop opened with a local startup error; no reset was performed. |
 | Docker Desktop access | Blocked | Docker Desktop is now running, but the current Windows account is denied access to its Docker engine pipe. |
 | TVmaze API documentation reviewed | Complete | Search, detail, images, caching, rate-limit, and license rules reviewed. |
+| Live production homepage | Passed | `https://jybdeployment.com` returns 200 through Caddy and renders WatchVault with a published TVmaze show. |
+| Live production stylesheet | Passed | The hashed WatchVault stylesheet returns 200 and is cacheable. |
