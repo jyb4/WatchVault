@@ -1,6 +1,6 @@
 # WatchVault — living project log
 
-This document is the project’s single source of truth for progress, decisions, and next work. Update it at the end of each meaningful work session.
+This is the chronological record of progress, decisions, and next work. Update it at the end of each meaningful work session. For the authoritative current architecture and operating procedures, use [the canonical documentation](docs/CANONICAL.md).
 
 ## Project snapshot
 

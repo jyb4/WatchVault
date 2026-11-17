@@ -31,6 +31,7 @@ Review the imported profile in Django Admin and publish it only when it is ready
 
 ## Documentation
 
+- [Canonical technical and operations guide](docs/CANONICAL.md)
 - [Project brief](docs/project-brief.md)
 - [Information architecture](docs/information-architecture.md)
 - [Architecture and delivery plan](docs/architecture.md)
