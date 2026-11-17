@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Discover | WatchVault{% endblock %}
+{% block content %}
+<h1>Discover shows</h1>
+<form method="get"><label for="q">Search the catalog</label><input id="q" name="q" value="{{ request.GET.q }}"><button type="submit">Search</button></form>
+{% if shows %}<ul>{% for show in shows %}<li><a href="{{ show.get_absolute_url }}">{{ show.title }}</a>{% if show.external_rating %} — {{ show.external_rating }}/10{% endif %}</li>{% endfor %}</ul>{% else %}<p>No published shows match that search.</p>{% endif %}
+{% endblock %}

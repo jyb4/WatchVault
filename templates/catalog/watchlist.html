@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}My Watchlist | WatchVault{% endblock %}
+{% block content %}
+<h1>My Watchlist</h1>
+{% if items %}<ul>{% for item in items %}<li><a href="{{ item.show.get_absolute_url }}">{{ item.show.title }}</a></li>{% endfor %}</ul>{% else %}<p>Your watchlist is empty. Explore the catalog to find a show.</p>{% endif %}
+{% endblock %}

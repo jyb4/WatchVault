@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h1>Your next great show is in the vault.</h1>
+  <p>Discover editor-approved TV shows, save your favorites, and soon get catalog-grounded recommendations from the AI Guide.</p>
+  <a href="{% url 'show-list' %}">Browse shows</a>
+</section>
+<section aria-labelledby="featured-heading">
+  <h2 id="featured-heading">Featured shows</h2>
+  {% if shows %}<ul>{% for show in shows %}<li><a href="{{ show.get_absolute_url }}">{{ show.title }}</a></li>{% endfor %}</ul>{% else %}<p>The first curated shows will appear here soon.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WatchVault — curated TV discovery.">
+  <title>{% block title %}WatchVault{% endblock %}</title>
+</head>
+<body>
+  <header>
+    <nav aria-label="Primary navigation">
+      <a href="{% url 'home' %}">WatchVault</a>
+      <a href="{% url 'show-list' %}">Discover</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'watchlist' %}">My Watchlist</a>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
+      {% else %}
+        <a href="{% url 'login' %}">Sign in</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>
+    <p>TV show information is sourced from <a href="https://www.tvmaze.com/">TVmaze</a>.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ show.title }} | WatchVault{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ show.title }}</h1>
+  {% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}
+  <p>{{ show.synopsis }}</p>
+  {% if show.genres.exists %}<p>Genres: {% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  {% if show.source_url %}<p><a href="{{ show.source_url }}">Source information</a></p>{% endif %}
+</article>
+{% endblock %}
