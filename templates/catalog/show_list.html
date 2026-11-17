@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Discover | WatchVault{% endblock %}
 {% block content %}
-<h1>Discover shows</h1>
-<form method="get"><label for="q">Search the catalog</label><input id="q" name="q" value="{{ request.GET.q }}"><button type="submit">Search</button></form>
-{% if shows %}<ul>{% for show in shows %}<li><a href="{{ show.get_absolute_url }}">{{ show.title }}</a>{% if show.external_rating %} — {{ show.external_rating }}/10{% endif %}</li>{% endfor %}</ul>{% else %}<p>No published shows match that search.</p>{% endif %}
+<section class="section">
+<p class="eyebrow">THE CATALOG</p><h1>Discover shows</h1>
+<form class="search-form" method="get"><label for="q">Search the catalog</label><input id="q" name="q" value="{{ request.GET.q }}" placeholder="Search by title"><button type="submit">Search</button></form>
+{% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<h2>{{ show.title }}</h2></a><p>{% if show.external_rating %}★ {{ show.external_rating }}/10{% endif %}</p></article>{% endfor %}</div>{% else %}<p class="empty-state">No published shows match that search.</p>{% endif %}
+</section>
 {% endblock %}

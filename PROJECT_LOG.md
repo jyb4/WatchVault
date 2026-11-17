@@ -26,14 +26,14 @@ This document is the project’s single source of truth for progress, decisions,
 | Milestone | Deliverable | Status |
 | --- | --- | --- |
 | 1. Strategy and information architecture | Project brief, roles, sitemap, user journeys | Complete |
-| 2. Development foundation | Django structure, Docker Compose, PostgreSQL/pgvector, Git repository | Complete; Docker engine needs to be started for runtime verification |
+| 2. Development foundation | Django structure, Docker Compose, PostgreSQL/pgvector, Git repository | Complete; Docker Desktop has a startup error, so runtime verification is blocked locally |
 | 3. Catalog CMS | Show/genre models, editorial statuses, Django Admin | In progress |
 | 4. TVmaze import | Search-by-title import command, validation, attribution | In progress |
-| 5. Member experience | Responsive design, registration, add/remove watchlist, filters | Not started |
+| 5. Member experience | Responsive design, registration, add/remove watchlist, filters | In progress — responsive UI and watchlist mutations added |
 | 6. Semantic retrieval | Chunking, embeddings, pgvector search | Not started |
 | 7. Graph discovery | People/show/genre relationship graph and related shows | Not started |
 | 8. RAG AI Guide | Source-linked, catalog-only answers | Not started |
-| 9. Operations | Automated tests, GitHub Actions, server deployment, HTTPS, backups, analytics | Not started |
+| 9. Operations | Automated tests, GitHub Actions, server deployment, HTTPS, backups, analytics | In progress — CI and Docker/Caddy deployment configuration added |
 
 ## Current implementation
 
@@ -42,6 +42,7 @@ This document is the project’s single source of truth for progress, decisions,
 - A `Show` contains a TVmaze ID and source URL, import timestamp, genres, synopsis, image URL, premiere date, network, rating, and publishing status.
 - `python manage.py import_tvmaze "Show Name"` imports the closest TVmaze search result as a **draft**.
 - The importer handles empty searches, network errors, HTTP failures, and rate limiting. It does not store an API key because the public TVmaze endpoints used here do not require one.
+- The project now has a production Compose configuration, Caddy HTTPS reverse proxy, environment template, deployment runbook, and GitHub Actions test workflow.
 
 ## TVmaze integration rules
 
@@ -58,12 +59,14 @@ This document is the project’s single source of truth for progress, decisions,
 3. Run `docker compose exec web python manage.py migrate`.
 4. Create an administrator account.
 5. Import and review a small set of TV shows in Django Admin.
-6. Build the add/remove watchlist workflow and the responsive visual design.
+6. Add account registration and catalog filters.
+7. Before server deployment, copy `.env.production.example` to `.env.production` on the server and replace its placeholder domain and secrets.
 
 ## Evidence and verification
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| Docker Compose configuration | Passed | Configuration parses successfully. |
+| Docker Compose configuration | Passed | Development configuration parses successfully. |
 | Django runtime/test suite | Pending | Docker Desktop was not running during initial setup. |
+| Docker Desktop runtime | Blocked | Docker Desktop opened with a local startup error; no reset was performed. |
 | TVmaze API documentation reviewed | Complete | Search, detail, images, caching, rate-limit, and license rules reviewed. |

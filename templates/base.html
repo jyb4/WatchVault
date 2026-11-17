@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="WatchVault — curated TV discovery.">
   <title>{% block title %}WatchVault{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <nav aria-label="Primary navigation">
-      <a href="{% url 'home' %}">WatchVault</a>
+      <a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
       <a href="{% url 'show-list' %}">Discover</a>
       {% if user.is_authenticated %}
         <a href="{% url 'watchlist' %}">My Watchlist</a>
@@ -19,8 +21,8 @@
       {% endif %}
     </nav>
   </header>
-  <main>{% block content %}{% endblock %}</main>
-  <footer>
+  <main class="site-main">{% block content %}{% endblock %}</main>
+  <footer class="site-footer">
     <p>TV show information is sourced from <a href="https://www.tvmaze.com/">TVmaze</a>.</p>
   </footer>
 </body>

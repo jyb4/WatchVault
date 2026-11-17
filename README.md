@@ -9,7 +9,7 @@ WatchVault is a self-hosted TV-show discovery platform. Editors curate an approv
 - Docker Compose development environment
 - Public home, show catalog, show-detail, authentication, and watchlist routes
 - Editorial publishing workflow (`draft` → `published`)
-- A provider-agnostic TV API import seam (the provider will be selected before implementation)
+- TVmaze-powered, editor-reviewed TV-show import workflow
 
 ## Run locally
 
@@ -35,6 +35,7 @@ Review the imported profile in Django Admin and publish it only when it is ready
 - [Information architecture](docs/information-architecture.md)
 - [Architecture and delivery plan](docs/architecture.md)
 - [Living project log](PROJECT_LOG.md)
+- [Server deployment guide](deploy/DEPLOYMENT.md)
 
 ## Original project
 

@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<section>
+<section class="hero">
+  <p class="eyebrow">CURATED TV DISCOVERY</p>
   <h1>Your next great show is in the vault.</h1>
   <p>Discover editor-approved TV shows, save your favorites, and soon get catalog-grounded recommendations from the AI Guide.</p>
   <a href="{% url 'show-list' %}">Browse shows</a>
 </section>
-<section aria-labelledby="featured-heading">
+<section class="section" aria-labelledby="featured-heading">
   <h2 id="featured-heading">Featured shows</h2>
-  {% if shows %}<ul>{% for show in shows %}<li><a href="{{ show.get_absolute_url }}">{{ show.title }}</a></li>{% endfor %}</ul>{% else %}<p>The first curated shows will appear here soon.</p>{% endif %}
+  {% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<h3>{{ show.title }}</h3></a><p>{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p></article>{% endfor %}</div>{% else %}<p class="empty-state">The first curated shows will appear here soon.</p>{% endif %}
 </section>
 {% endblock %}

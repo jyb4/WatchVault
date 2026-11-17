@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}My Watchlist | WatchVault{% endblock %}
 {% block content %}
-<h1>My Watchlist</h1>
-{% if items %}<ul>{% for item in items %}<li><a href="{{ item.show.get_absolute_url }}">{{ item.show.title }}</a></li>{% endfor %}</ul>{% else %}<p>Your watchlist is empty. Explore the catalog to find a show.</p>{% endif %}
+<section class="section"><p class="eyebrow">YOUR VAULT</p><h1>My Watchlist</h1>
+{% if items %}<div class="show-grid">{% for item in items %}<article class="show-card"><a href="{{ item.show.get_absolute_url }}">{% if item.show.poster_url %}<img src="{{ item.show.poster_url }}" alt="Poster for {{ item.show.title }}">{% endif %}<h2>{{ item.show.title }}</h2></a></article>{% endfor %}</div>{% else %}<p class="empty-state">Your watchlist is empty. <a href="{% url 'show-list' %}">Explore the catalog</a> to find a show.</p>{% endif %}</section>
 {% endblock %}
