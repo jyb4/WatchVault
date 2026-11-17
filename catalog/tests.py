@@ -1,8 +1,10 @@
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
 from .models import Genre, Show
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class CatalogVisibilityTests(TestCase):
     def test_drafts_are_not_visible_in_public_catalog(self):
         Show.objects.create(title="Unpublished Show", slug="unpublished-show")
