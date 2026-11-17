@@ -8,6 +8,7 @@ This document is the project’s single source of truth for progress, decisions,
 - **Purpose:** A self-hosted, multi-user TV-show discovery CMS with personal watchlists and a future catalog-grounded AI Guide.
 - **Primary stack:** Django, PostgreSQL, pgvector, Docker Compose; Neo4j is an optional later graph-service profile.
 - **Catalog source:** [TVmaze API](https://www.tvmaze.com/api)
+- **Planned production address:** `watchvault.jybdeployment.com` (keeps the existing root-domain site online)
 - **Original prototype:** PHP project retained outside this folder for reference only.
 
 ## Product decisions
@@ -60,7 +61,8 @@ This document is the project’s single source of truth for progress, decisions,
 4. Create an administrator account.
 5. Import and review a small set of TV shows in Django Admin.
 6. Add account registration and catalog filters.
-7. Before server deployment, copy `.env.production.example` to `.env.production` on the server and replace its placeholder domain and secrets.
+7. Before server deployment, copy `.env.production.example` to `.env.production` on the server and replace its example secrets.
+8. Create the `watchvault.jybdeployment.com` DNS record before deploying; do not replace the active root-domain site without a deliberate migration plan.
 
 ## Evidence and verification
 
@@ -69,4 +71,5 @@ This document is the project’s single source of truth for progress, decisions,
 | Docker Compose configuration | Passed | Development configuration parses successfully. |
 | Django runtime/test suite | Pending | Docker Desktop was not running during initial setup. |
 | Docker Desktop runtime | Blocked | Docker Desktop opened with a local startup error; no reset was performed. |
+| Docker Desktop access | Blocked | Docker Desktop is now running, but the current Windows account is denied access to its Docker engine pipe. |
 | TVmaze API documentation reviewed | Complete | Search, detail, images, caching, rate-limit, and license rules reviewed. |

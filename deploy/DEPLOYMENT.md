@@ -2,10 +2,12 @@
 
 This guide prepares WatchVault for a Linux server with Docker Engine, Docker Compose, a domain name, and ports 80/443 reachable from the internet. Caddy obtains and renews HTTPS certificates automatically when the domain DNS points to the server.
 
+The root domain `jybdeployment.com` already serves another site. The recommended WatchVault address is **`watchvault.jybdeployment.com`** so the existing site remains online. Using the root domain instead would require replacing its existing web-server route.
+
 ## Before deployment
 
 1. Install Docker Engine and Docker Compose on the server.
-2. Point a domain or subdomain, such as `watchvault.example.com`, to the server’s public IP address.
+2. Create a DNS record for `watchvault.jybdeployment.com` pointing to the server’s public IP address.
 3. Allow inbound TCP ports 80 and 443 through the server firewall and hosting provider firewall.
 4. Clone the WatchVault repository onto the server.
 5. Copy `.env.production.example` to `.env.production` and replace every example secret and domain.
@@ -22,7 +24,7 @@ docker compose -f compose.production.yaml exec web python manage.py migrate
 docker compose -f compose.production.yaml exec web python manage.py createsuperuser
 ```
 
-Open `https://YOUR-DOMAIN/admin/`, create an editor account, import a small catalog, review the drafts, and publish only approved entries.
+Open `https://watchvault.jybdeployment.com/admin/`, create an editor account, import a small catalog, review the drafts, and publish only approved entries.
 
 ## Updating
 
