@@ -1,5 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Discover | WatchVault{% endblock %}
 {% block content %}
-<section class="catalog-page"><p class="eyebrow">THE CATALOG</p><h1>Discover your next show.</h1><form class="search-form" method="get"><label for="q">Search WatchVault</label><div><input id="q" name="q" value="{{ query }}" placeholder="Search titles, genres, networks, and descriptions"><button type="submit">Search</button></div></form>{% if query %}<p class="result-summary">Results for “{{ query }}”</p>{% endif %}{% if shows %}<div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<div class="card-body"><h2>{{ show.title }}</h2><p class="card-genres">{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% if show.external_rating %}<p class="rating">★ {{ show.external_rating }}/10</p>{% endif %}</div></a></article>{% endfor %}</div>{% else %}<p class="empty-state">No published shows match that search. Try a title, genre, network, or a broader phrase.</p>{% endif %}</section>
+<section class="catalog-page">
+  <p class="eyebrow">THE CATALOG</p>
+  <h1>Discover your next show.</h1>
+  <form class="search-form" method="get">
+    <label for="q">Search WatchVault and TVmaze</label>
+    <div><input id="q" name="q" value="{{ query }}" placeholder="Search any TV show by name" autofocus><button type="submit">Search</button></div>
+  </form>
+  {% if query %}<p class="result-summary">Results for “{{ query }}”</p>{% endif %}
+  {% if shows %}
+    {% if query %}<h2 class="results-heading">In WatchVault</h2>{% endif %}
+    <div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<div class="card-body"><h2>{{ show.title }}</h2><p class="card-genres">{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% if show.external_rating %}<p class="rating">★ {{ show.external_rating }}/10</p>{% endif %}</div></a></article>{% endfor %}</div>
+  {% endif %}
+  {% if external_results %}
+    <section class="external-results" aria-labelledby="tvmaze-results">
+      <h2 id="tvmaze-results" class="results-heading">More matches from TVmaze</h2>
+      <div class="show-grid">{% for show in external_results %}<article class="show-card"><a href="{{ show.source_url }}" target="_blank" rel="noopener noreferrer">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<div class="card-body"><h2>{{ show.title }}</h2><p class="card-genres">{{ show.genres|join:" · " }}</p>{% if show.rating %}<p class="rating">★ {{ show.rating }}/10</p>{% endif %}<p class="external-link">View on TVmaze ↗</p></div></a></article>{% endfor %}</div>
+    </section>
+  {% endif %}
+  {% if query and not shows and not external_results %}<p class="empty-state">No matching shows were found. Try a shorter title or a different spelling.</p>{% elif not query and not shows %}<p class="empty-state">The catalog is being prepared. Search by a show title to explore TVmaze.</p>{% endif %}
+</section>
 {% endblock %}

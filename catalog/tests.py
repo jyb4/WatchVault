@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -16,8 +18,16 @@ class CatalogVisibilityTests(TestCase):
         response = self.client.get(reverse("show-list"))
         self.assertContains(response, "Published Show")
 
-    def test_catalog_search_matches_a_genre(self):
+    @patch("catalog.views.search_tvmaze_shows", return_value=[])
+    def test_catalog_search_matches_a_genre(self, _tvmaze_search):
         genre = Genre.objects.create(name="Science-Fiction", slug="science-fiction")
         show = Show.objects.create(title="The Signal", slug="the-signal", status=Show.Status.PUBLISHED)
         show.genres.add(genre)
         self.assertContains(self.client.get(reverse("show-list"), {"q": "science"}), "The Signal")
+
+    @patch("catalog.views.search_tvmaze_shows")
+    def test_catalog_search_includes_tvmaze_matches_not_in_local_catalog(self, tvmaze_search):
+        tvmaze_search.return_value = [{"id": "999", "title": "Unimported Match", "summary": "A show found by TVmaze.", "poster_url": "", "rating": 8.5, "genres": ["Drama"], "source_url": "https://www.tvmaze.com/shows/999/unimported-match"}]
+        response = self.client.get(reverse("show-list"), {"q": "unimported"})
+        self.assertContains(response, "Unimported Match")
+        self.assertContains(response, "More matches from TVmaze")

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from .models import Show, WatchlistItem
+from .tvmaze import search_shows as search_tvmaze_shows
 
 
 class HomeView(ListView):
@@ -36,7 +37,21 @@ class ShowListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["query"] = self.request.GET.get("q", "").strip()
+        query = self.request.GET.get("q", "").strip()
+        context["query"] = query
+        context["external_results"] = []
+        if query:
+            local_source_ids = set(
+                Show.objects.filter(
+                    status=Show.Status.PUBLISHED,
+                    source_name="TVmaze",
+                ).values_list("source_id", flat=True)
+            )
+            context["external_results"] = [
+                result
+                for result in search_tvmaze_shows(query)
+                if result["id"] not in local_source_ids
+            ]
         return context
 
 
