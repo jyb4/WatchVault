@@ -1,11 +1,29 @@
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from .models import Show, WatchlistItem
 from .tvmaze import fetch_show, search_shows as search_tvmaze_shows, upsert_show
+
+
+def signup(request):
+    next_url = request.POST.get("next") or request.GET.get("next", "")
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            if url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
+                return redirect(next_url)
+            return redirect("watchlist")
+    else:
+        form = UserCreationForm()
+    return render(request, "registration/signup.html", {"form": form, "next": next_url})
 
 
 class HomeView(ListView):

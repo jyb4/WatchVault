@@ -57,3 +57,12 @@ class CatalogVisibilityTests(TestCase):
         self.assertEqual(show.status, Show.Status.PUBLISHED)
         self.assertFalse(show.featured_on_home)
         self.assertTrue(WatchlistItem.objects.filter(user=user, show=show).exists())
+
+    def test_member_can_create_an_account(self):
+        response = self.client.post(
+            reverse("signup"),
+            {"username": "new-member", "password1": "Secur3-passphrase!", "password2": "Secur3-passphrase!"},
+        )
+
+        self.assertRedirects(response, reverse("watchlist"))
+        self.assertTrue(get_user_model().objects.filter(username="new-member").exists())
