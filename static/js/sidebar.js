@@ -2,6 +2,7 @@
   const sidebar = document.querySelector(".app-sidebar");
   const toggle = document.querySelector(".sidebar-toggle");
   const glyph = document.querySelector(".toggle-glyph");
+  const label = document.querySelector(".sidebar-toggle .nav-label");
   if (!sidebar || !toggle || !glyph) return;
 
   const setOpen = (open) => {
@@ -9,6 +10,7 @@
     toggle.setAttribute("aria-expanded", String(open));
     toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
     glyph.textContent = open ? "‹" : "☰";
+    if (label) label.textContent = open ? "Close menu" : "Open menu";
   };
 
   toggle.addEventListener("click", () => setOpen(!document.body.classList.contains("sidebar-open")));
