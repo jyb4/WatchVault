@@ -4,33 +4,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="WatchVault — curated TV discovery.">
+  <meta name="description" content="WatchVault — cinematic TV discovery and personal watchlists.">
   <title>{% block title %}WatchVault{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/search.css' %}">
-  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-  <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+  <link rel="stylesheet" href="{% static 'css/streaming.css' %}">
 </head>
-<body class="dashboard-shell">
-  <aside class="app-sidebar" aria-label="WatchVault navigation">
-    <a class="sidebar-mark" href="{% url 'home' %}" aria-label="WatchVault home">WV</a>
-    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation"><span class="toggle-glyph" aria-hidden="true">☰</span><span class="nav-label">Open menu</span></button>
-    <nav id="primary-navigation" class="side-nav">
-      <a href="{% url 'home' %}" aria-label="Home"><span aria-hidden="true">⌂</span><span class="nav-label">Home</span></a>
-      <a href="{% url 'show-list' %}" aria-label="Search shows"><span aria-hidden="true">⌕</span><span class="nav-label">Search shows</span></a>
-      {% if user.is_authenticated %}<a href="{% url 'watchlist' %}" aria-label="My watchlist"><span aria-hidden="true">♡</span><span class="nav-label">My watchlist</span></a>{% endif %}
-    </nav>
-    <div class="sidebar-bottom"><a href="{% url 'show-list' %}" aria-label="AI Guide coming soon"><span aria-hidden="true">✦</span><span class="nav-label">AI Guide</span></a>{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" aria-label="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form>{% else %}<a href="{% url 'login' %}" aria-label="Sign in"><span aria-hidden="true">◉</span><span class="nav-label">Sign in</span></a>{% endif %}</div>
-  </aside>
-  <header class="app-topbar">
-    <a class="brand mobile-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
-    <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search any TV show"></form>
-    <div class="topbar-account">{% if user.is_authenticated %}<a href="{% url 'watchlist' %}">My Vault</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
+<body class="streaming-shell">
+  <header class="streaming-header" data-header>
+    <a class="brand streaming-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
+    <nav class="top-nav" aria-label="Primary navigation"><a href="{% url 'home' %}">Home</a><a href="{% url 'show-list' %}">TV Shows</a><a href="#trending">Trending</a><a href="#categories">Categories</a></nav>
+    <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search TV shows"></form>
+    <div class="account-actions">{% if user.is_authenticated %}<a class="profile-link" href="{% url 'watchlist' %}"><span aria-hidden="true">●</span> My List</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
   </header>
-  <main class="app-main">{% block content %}{% endblock %}</main>
-  <footer class="site-footer"><p>TV show information is sourced from <a href="https://www.tvmaze.com/">TVmaze</a>.</p></footer>
-  <nav class="mobile-dock" aria-label="Mobile navigation"><a href="{% url 'home' %}"><span aria-hidden="true">⌂</span>Home</a><a href="{% url 'show-list' %}"><span aria-hidden="true">⌕</span>Search</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}"><span aria-hidden="true">♡</span>Vault</a>{% else %}<a href="{% url 'login' %}"><span aria-hidden="true">◉</span>Sign in</a>{% endif %}</nav>
-  <script src="{% static 'js/sidebar.js' %}" defer></script>
+  <main class="streaming-main">{% block content %}{% endblock %}</main>
+  <footer class="streaming-footer"><div><a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a><p>Discover and track your next great TV show.</p></div><div><a href="{% url 'show-list' %}">Browse shows</a><a href="#categories">Categories</a><a href="https://www.tvmaze.com/">TVmaze data</a></div><p>© {% now "Y" %} WatchVault</p></footer>
+  <script src="{% static 'js/header.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

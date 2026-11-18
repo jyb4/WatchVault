@@ -41,9 +41,18 @@ class HomeView(ListView):
         shows = list(context["featured_shows"])
         context["hero_slides"] = shows[:5]
         context["trending"] = shows[:8]
+        context["top_rated"] = shows[:6]
         context["recently_added"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).prefetch_related("genres").order_by("-created_at")[:8]
+        context["categories"] = Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+        ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
+        context["watchlist_shows"] = []
+        if self.request.user.is_authenticated:
+            context["watchlist_shows"] = [
+                item.show for item in WatchlistItem.objects.filter(user=self.request.user).select_related("show")[:8]
+            ]
         return context
 
 
