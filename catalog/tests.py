@@ -7,7 +7,10 @@ from django.urls import reverse
 from .models import Genre, Show, WatchlistItem
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(
+    SECURE_SSL_REDIRECT=False,
+    STORAGES={"staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}},
+)
 class CatalogVisibilityTests(TestCase):
     def test_drafts_are_not_visible_in_public_catalog(self):
         Show.objects.create(title="Unpublished Show", slug="unpublished-show")
