@@ -9,17 +9,20 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/search.css' %}">
   <link rel="stylesheet" href="{% static 'css/streaming.css' %}">
+  <link rel="stylesheet" href="{% static 'css/search-overlay.css' %}">
 </head>
 <body class="streaming-shell">
   <header class="streaming-header" data-header>
+    <details class="compact-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span></summary><nav><a href="{% url 'home' %}">Home</a><a href="{% url 'show-list' %}">TV Shows</a><a href="{% url 'home' %}#trending">Trending</a><a href="{% url 'home' %}#categories">Categories</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}">My List</a>{% endif %}</nav></details>
     <a class="brand streaming-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
-    <nav class="top-nav" aria-label="Primary navigation"><a href="{% url 'home' %}">Home</a><a href="{% url 'show-list' %}">TV Shows</a><a href="#trending">Trending</a><a href="#categories">Categories</a></nav>
-    <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search TV shows"></form>
+    <button class="search-trigger" type="button" data-search-open><span aria-hidden="true">⌕</span><span>Search TV shows</span><kbd>Ctrl</kbd><kbd>S</kbd></button>
     <div class="account-actions">{% if user.is_authenticated %}<a class="profile-link" href="{% url 'watchlist' %}"><span aria-hidden="true">●</span> My List</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
   </header>
   <main class="streaming-main">{% block content %}{% endblock %}</main>
-  <footer class="streaming-footer"><div><a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a><p>Discover and track your next great TV show.</p></div><div><a href="{% url 'show-list' %}">Browse shows</a><a href="#categories">Categories</a><a href="https://www.tvmaze.com/">TVmaze data</a></div><p>© {% now "Y" %} WatchVault</p></footer>
+  <footer class="streaming-footer"><div><a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a><p>Discover and track your next great TV show.</p></div><div><a href="{% url 'show-list' %}">Browse shows</a><a href="{% url 'home' %}#categories">Categories</a><a href="https://www.tvmaze.com/">TVmaze data</a></div><p>© {% now "Y" %} WatchVault</p></footer>
+  <dialog class="search-overlay" data-search-dialog aria-labelledby="search-title"><div class="search-panel"><div class="search-panel-head"><p id="search-title">QUICK SEARCH <kbd>CTRL</kbd> + <kbd>S</kbd></p><button type="button" data-search-close aria-label="Close search">×</button></div><div class="overlay-search-box"><label class="sr-only" for="live-search-input">Search TV shows</label><input id="live-search-input" type="search" autocomplete="off" placeholder="Search any TV show..." data-live-search><span aria-hidden="true">⌕</span></div><p class="search-status" data-search-status>Trending in WatchVault</p><div class="live-results" data-live-results aria-live="polite"></div></div></dialog>
   <script src="{% static 'js/header.js' %}" defer></script>
+  <script src="{% static 'js/live-search.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

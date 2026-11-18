@@ -69,3 +69,12 @@ class CatalogVisibilityTests(TestCase):
 
         self.assertRedirects(response, reverse("watchlist"))
         self.assertTrue(get_user_model().objects.filter(username="new-member").exists())
+
+    @patch("catalog.views.search_tvmaze_shows", return_value=[])
+    def test_live_search_returns_matching_local_shows(self, _tvmaze_search):
+        Show.objects.create(title="The Flash", slug="the-flash", status=Show.Status.PUBLISHED)
+
+        response = self.client.get(reverse("live-search"), {"q": "flash"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"][0]["title"], "The Flash")

@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
     path("shows/", views.ShowListView.as_view(), name="show-list"),
+    path("api/live-search/", views.live_search, name="live-search"),
     path("shows/<slug:slug>/", views.ShowDetailView.as_view(), name="show-detail"),
     path("my-watchlist/", views.WatchlistView.as_view(), name="watchlist"),
     path("shows/<slug:slug>/watchlist/", views.add_to_watchlist, name="watchlist-add"),

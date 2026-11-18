@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -24,6 +25,48 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, "registration/signup.html", {"form": form, "next": next_url})
+
+
+def live_search(request):
+    """Provide lightweight, debounced search results for the search overlay."""
+    query = request.GET.get("q", "").strip()
+    local_shows = Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres")
+    if query:
+        local_shows = local_shows.filter(
+            Q(title__icontains=query)
+            | Q(synopsis__icontains=query)
+            | Q(network__icontains=query)
+            | Q(genres__name__icontains=query)
+        ).distinct()
+    local_shows = local_shows.order_by("-external_rating", "title")[:8]
+    results = [
+        {
+            "title": show.title,
+            "meta": f"TV · {show.premiered_on.year}" if show.premiered_on else "TV series",
+            "poster": show.poster_url,
+            "url": show.get_absolute_url(),
+            "source": "WatchVault",
+        }
+        for show in local_shows
+    ]
+    if query:
+        local_source_ids = set(
+            Show.objects.filter(status=Show.Status.PUBLISHED, source_name="TVmaze").values_list("source_id", flat=True)
+        )
+        for show in search_tvmaze_shows(query):
+            if show["id"] not in local_source_ids:
+                results.append(
+                    {
+                        "title": show["title"],
+                        "meta": "TVmaze match",
+                        "poster": show["poster_url"],
+                        "url": show["source_url"],
+                        "source": "TVmaze",
+                    }
+                )
+            if len(results) >= 12:
+                break
+    return JsonResponse({"query": query, "results": results[:12]})
 
 
 class HomeView(ListView):
