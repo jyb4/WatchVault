@@ -8,25 +8,27 @@
   <title>{% block title %}WatchVault{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/search.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
-<body>
-  <header class="site-header">
-    <nav aria-label="Primary navigation">
-      <a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
-      <a href="{% url 'show-list' %}">Discover</a>
-      <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search shows, genres, people…"></form>
-      {% if user.is_authenticated %}
-        <a href="{% url 'watchlist' %}">My Watchlist</a>
-        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
-      {% else %}
-        <a href="{% url 'login' %}">Sign in</a>
-        <a href="{% url 'signup' %}">Join</a>
-      {% endif %}
+<body class="dashboard-shell">
+  <aside class="app-sidebar" aria-label="WatchVault navigation">
+    <a class="brand sidebar-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
+    <p class="sidebar-label">DISCOVER</p>
+    <nav class="side-nav">
+      <a href="{% url 'home' %}"><span aria-hidden="true">⌂</span> Home</a>
+      <a href="{% url 'show-list' %}"><span aria-hidden="true">⌕</span> Search shows</a>
+      {% if user.is_authenticated %}<a href="{% url 'watchlist' %}"><span aria-hidden="true">♡</span> My watchlist</a>{% endif %}
     </nav>
+    <div class="sidebar-bottom"><p class="sidebar-label">WATCHVAULT</p><a href="{% url 'show-list' %}"><span aria-hidden="true">✦</span> AI Guide <small>soon</small></a>{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><span aria-hidden="true">↪</span> Sign out</button></form>{% else %}<a href="{% url 'login' %}"><span aria-hidden="true">◉</span> Sign in</a>{% endif %}</div>
+  </aside>
+  <header class="app-topbar">
+    <a class="brand mobile-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
+    <form class="nav-search" method="get" action="{% url 'show-list' %}" role="search"><label class="sr-only" for="site-search">Search shows</label><input id="site-search" name="q" type="search" placeholder="Search any TV show"></form>
+    <div class="topbar-account">{% if user.is_authenticated %}<a href="{% url 'watchlist' %}">My Vault</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
   </header>
-  <main class="site-main">{% block content %}{% endblock %}</main>
-  <footer class="site-footer">
-    <p>TV show information is sourced from <a href="https://www.tvmaze.com/">TVmaze</a>.</p>
-  </footer>
+  <main class="app-main">{% block content %}{% endblock %}</main>
+  <footer class="site-footer"><p>TV show information is sourced from <a href="https://www.tvmaze.com/">TVmaze</a>.</p></footer>
+  <nav class="mobile-dock" aria-label="Mobile navigation"><a href="{% url 'home' %}"><span aria-hidden="true">⌂</span>Home</a><a href="{% url 'show-list' %}"><span aria-hidden="true">⌕</span>Search</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}"><span aria-hidden="true">♡</span>Vault</a>{% else %}<a href="{% url 'login' %}"><span aria-hidden="true">◉</span>Sign in</a>{% endif %}</nav>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

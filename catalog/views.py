@@ -39,9 +39,11 @@ class HomeView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         shows = list(context["featured_shows"])
-        context["featured"] = shows[0] if shows else None
-        context["trending"] = shows[1:9]
-        context["more_to_explore"] = shows[9:17]
+        context["hero_slides"] = shows[:5]
+        context["trending"] = shows[:8]
+        context["recently_added"] = Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+        ).prefetch_related("genres").order_by("-created_at")[:8]
         return context
 
 
