@@ -12,14 +12,13 @@
 </head>
 <body class="dashboard-shell">
   <aside class="app-sidebar" aria-label="WatchVault navigation">
-    <a class="brand sidebar-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
-    <p class="sidebar-label">DISCOVER</p>
+    <a class="sidebar-mark" href="{% url 'home' %}" aria-label="WatchVault home">WV</a>
     <nav class="side-nav">
-      <a href="{% url 'home' %}"><span aria-hidden="true">⌂</span> Home</a>
-      <a href="{% url 'show-list' %}"><span aria-hidden="true">⌕</span> Search shows</a>
-      {% if user.is_authenticated %}<a href="{% url 'watchlist' %}"><span aria-hidden="true">♡</span> My watchlist</a>{% endif %}
+      <a href="{% url 'home' %}" aria-label="Home"><span aria-hidden="true">⌂</span><span class="nav-label">Home</span></a>
+      <a href="{% url 'show-list' %}" aria-label="Search shows"><span aria-hidden="true">⌕</span><span class="nav-label">Search shows</span></a>
+      {% if user.is_authenticated %}<a href="{% url 'watchlist' %}" aria-label="My watchlist"><span aria-hidden="true">♡</span><span class="nav-label">My watchlist</span></a>{% endif %}
     </nav>
-    <div class="sidebar-bottom"><p class="sidebar-label">WATCHVAULT</p><a href="{% url 'show-list' %}"><span aria-hidden="true">✦</span> AI Guide <small>soon</small></a>{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><span aria-hidden="true">↪</span> Sign out</button></form>{% else %}<a href="{% url 'login' %}"><span aria-hidden="true">◉</span> Sign in</a>{% endif %}</div>
+    <div class="sidebar-bottom"><a href="{% url 'show-list' %}" aria-label="AI Guide coming soon"><span aria-hidden="true">✦</span><span class="nav-label">AI Guide</span></a>{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" aria-label="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form>{% else %}<a href="{% url 'login' %}" aria-label="Sign in"><span aria-hidden="true">◉</span><span class="nav-label">Sign in</span></a>{% endif %}</div>
   </aside>
   <header class="app-topbar">
     <a class="brand mobile-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
