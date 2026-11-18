@@ -8,4 +8,5 @@ urlpatterns = [
     path("my-watchlist/", views.WatchlistView.as_view(), name="watchlist"),
     path("shows/<slug:slug>/watchlist/", views.add_to_watchlist, name="watchlist-add"),
     path("shows/<slug:slug>/watchlist/remove/", views.remove_from_watchlist, name="watchlist-remove"),
+    path("shows/import/<int:source_id>/watchlist/", views.import_to_watchlist, name="tvmaze-import-watchlist"),
 ]

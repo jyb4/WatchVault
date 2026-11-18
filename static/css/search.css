@@ -1,0 +1,24 @@
+.import-button {
+  width: 100%;
+  margin-top: 0.8rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+  color: #1c1408;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.65rem 0.8rem;
+}
+
+.source-link {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  margin-top: 0.7rem;
+  text-decoration: none;
+}
+
+.source-link:hover,
+.external-link:hover { color: var(--gold-soft); }

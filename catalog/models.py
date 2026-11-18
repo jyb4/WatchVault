@@ -32,6 +32,10 @@ class Show(models.Model):
     source_url = models.URLField(blank=True)
     import_updated_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=12, choices=Status, default=Status.DRAFT)
+    featured_on_home = models.BooleanField(
+        default=False,
+        help_text="Show this published title in the curated homepage rows.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

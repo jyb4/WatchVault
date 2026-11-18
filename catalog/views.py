@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from .models import Show, WatchlistItem
-from .tvmaze import search_shows as search_tvmaze_shows
+from .tvmaze import fetch_show, search_shows as search_tvmaze_shows, upsert_show
 
 
 class HomeView(ListView):
@@ -13,7 +13,10 @@ class HomeView(ListView):
     context_object_name = "featured_shows"
 
     def get_queryset(self):
-        return Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres").order_by("-external_rating", "title")[:17]
+        return Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+            featured_on_home=True,
+        ).prefetch_related("genres").order_by("-external_rating", "title")[:17]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,4 +91,17 @@ def add_to_watchlist(request, slug):
 def remove_from_watchlist(request, slug):
     show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
     WatchlistItem.objects.filter(user=request.user, show=show).delete()
+    return redirect(show)
+
+
+@login_required
+@require_POST
+def import_to_watchlist(request, source_id):
+    """Import one TVmaze match, then save it to the member's watchlist."""
+    data = fetch_show(source_id)
+    if data is None:
+        return redirect("show-list")
+
+    show, _created = upsert_show(data, publish=True)
+    WatchlistItem.objects.get_or_create(user=request.user, show=show)
     return redirect(show)

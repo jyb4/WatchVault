@@ -1,9 +1,10 @@
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
-from .models import Genre, Show
+from .models import Genre, Show, WatchlistItem
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)
@@ -31,3 +32,28 @@ class CatalogVisibilityTests(TestCase):
         response = self.client.get(reverse("show-list"), {"q": "unimported"})
         self.assertContains(response, "Unimported Match")
         self.assertContains(response, "More matches from TVmaze")
+
+    @patch("catalog.views.fetch_show")
+    def test_signed_in_member_can_import_a_tvmaze_match_to_watchlist(self, fetch_show):
+        user = get_user_model().objects.create_user(
+            username="member", password="test-password"
+        )
+        fetch_show.return_value = {
+            "id": 999,
+            "name": "Imported on Demand",
+            "summary": "A show saved from search.",
+            "image": {},
+            "premiered": "2026-01-01",
+            "rating": {"average": 8.2},
+            "genres": ["Drama"],
+            "url": "https://www.tvmaze.com/shows/999/imported-on-demand",
+        }
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("tvmaze-import-watchlist", args=[999]))
+
+        show = Show.objects.get(source_name="TVmaze", source_id="999")
+        self.assertRedirects(response, show.get_absolute_url())
+        self.assertEqual(show.status, Show.Status.PUBLISHED)
+        self.assertFalse(show.featured_on_home)
+        self.assertTrue(WatchlistItem.objects.filter(user=user, show=show).exists())

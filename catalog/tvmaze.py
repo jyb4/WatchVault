@@ -2,6 +2,7 @@
 
 import json
 import re
+from datetime import date
 from html import unescape
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -9,6 +10,10 @@ from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.core.cache import cache
+from django.template.defaultfilters import slugify
+from django.utils import timezone
+
+from .models import Genre, Show
 
 
 def _plain_text(value):
@@ -36,7 +41,7 @@ def search_shows(query):
         return []
 
     results = []
-    for match in payload[:12]:
+    for match in payload:
         show = match.get("show", {})
         image = show.get("image") or {}
         results.append(
@@ -53,3 +58,63 @@ def search_shows(query):
 
     cache.set(cache_key, results, timeout=900)
     return results
+
+
+def fetch_show(source_id):
+    """Fetch one TVmaze show by ID, returning None if TVmaze is unavailable."""
+    cache_key = f"tvmaze-show:{source_id}"
+    cached_show = cache.get(cache_key)
+    if cached_show is not None:
+        return cached_show
+
+    request = Request(
+        f"{settings.TVMAZE_BASE_URL}/shows/{source_id}",
+        headers={"Accept": "application/json", "User-Agent": settings.TVMAZE_USER_AGENT},
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            show = json.load(response)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+    cache.set(cache_key, show, timeout=3600)
+    return show
+
+
+def upsert_show(data, publish=False):
+    """Store TVmaze data as a WatchVault show while preserving editorial placement."""
+    premiered = data.get("premiered")
+    try:
+        premiered_on = date.fromisoformat(premiered) if premiered else None
+    except ValueError:
+        premiered_on = None
+
+    image = data.get("image") or {}
+    source_id = str(data["id"])
+    defaults = {
+        "title": data.get("name", "Untitled show"),
+        "slug": f"{slugify(data.get('name', 'show'))[:210]}-{source_id}",
+        "synopsis": _plain_text(data.get("summary")),
+        "poster_url": image.get("medium") or image.get("original", ""),
+        "premiered_on": premiered_on,
+        "external_rating": (data.get("rating") or {}).get("average"),
+        "network": (data.get("network") or data.get("webChannel") or {}).get("name", ""),
+        "source_url": data.get("url", ""),
+        "import_updated_at": timezone.now(),
+    }
+    show, created = Show.objects.get_or_create(
+        source_name="TVmaze",
+        source_id=source_id,
+        defaults={**defaults, "status": Show.Status.PUBLISHED if publish else Show.Status.DRAFT},
+    )
+    if not created:
+        for field, value in defaults.items():
+            setattr(show, field, value)
+        if publish:
+            show.status = Show.Status.PUBLISHED
+        show.save()
+
+    show.genres.set(
+        [Genre.objects.get_or_create(name=name, defaults={"slug": slugify(name)})[0] for name in data.get("genres", [])]
+    )
+    return show, created
