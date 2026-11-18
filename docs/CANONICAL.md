@@ -122,7 +122,7 @@ Do not remove a working fallback until the new release has been verified.
 
 ## 10.1 Discovery interface
 
-The homepage uses a cinematic featured-show hero, horizontal editorial discovery rows, a persistent catalog search, and a future-facing AI Guide entry point. Search matches published titles, genres, networks, and show descriptions. The visual direction is intentionally poster-first and dark, with a WatchVault-specific gold accent rather than a copy of any reference product.
+The homepage uses a cinematic featured-show hero, horizontal editorial discovery rows, a persistent catalog search, and a future-facing AI Guide entry point. Search matches published titles, genres, networks, and show descriptions. The visual direction is intentionally poster-first and dark, with a WatchVault-specific electric-blue accent rather than a copy of any reference product.
 
 ## 10.2 Dashboard discovery layout
 
