@@ -124,6 +124,10 @@ Do not remove a working fallback until the new release has been verified.
 
 The homepage uses a cinematic featured-show hero, horizontal editorial discovery rows, a persistent catalog search, and a future-facing AI Guide entry point. Search matches published titles, genres, networks, and show descriptions. The visual direction is intentionally poster-first and dark, with a WatchVault-specific gold accent rather than a copy of any reference product.
 
+## 10.2 Dashboard discovery layout
+
+The QA dashboard evolves the discovery interface into an app-style experience while preserving WatchVault branding and behavior. It includes a desktop sidebar, mobile navigation dock, searchable top bar, editorial carousel, dynamic Trending Now and New to the Vault rails, and a visual My Watchlist collection. Carousel content is restricted to editor-featured shows; member-imported shows do not automatically appear on the home page.
+
 ## 11. Next milestones
 
 1. Create the first Django administrator and editor account.
