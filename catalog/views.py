@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import re
 from difflib import SequenceMatcher
 
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -184,7 +184,7 @@ class HomeView(ListView):
         context["trending"] = shows[:10]
         context["top_rated"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by("-external_rating", "title")[:15]
+        ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
         context["recently_added"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).prefetch_related("genres").order_by("-created_at")[:14]
