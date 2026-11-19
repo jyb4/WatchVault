@@ -185,12 +185,15 @@ class HomeView(ListView):
         context["top_rated"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
-        context["recently_added"] = Show.objects.filter(
+        recently_added = list(Show.objects.filter(
             status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by("-created_at")[:14]
+        ).prefetch_related("genres").order_by("-created_at")[:14])
+        context["recently_added"] = recently_added
         context["fresh_this_week"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by("-import_updated_at", "-created_at")[:14]
+        ).exclude(pk__in=[show.pk for show in recently_added]).prefetch_related("genres").order_by(
+            "-import_updated_at", "-created_at"
+        )[:14]
         context["categories"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
