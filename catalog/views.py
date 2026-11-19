@@ -27,45 +27,51 @@ def signup(request):
     return render(request, "registration/signup.html", {"form": form, "next": next_url})
 
 
-def live_search(request):
-    """Provide lightweight, debounced search results for the search overlay."""
+def _search_result(show):
+    return {
+        "title": show.title,
+        "meta": f"TV · {show.premiered_on.year}" if show.premiered_on else "TV series",
+        "poster": show.poster_url,
+        "url": show.get_absolute_url(),
+        "source": "WatchVault",
+    }
+
+
+def local_search(request):
+    """Return catalog matches immediately, without waiting for an external service."""
     query = request.GET.get("q", "").strip()
-    local_shows = Show.objects.filter(status=Show.Status.PUBLISHED).prefetch_related("genres")
+    local_shows = Show.objects.filter(status=Show.Status.PUBLISHED)
     if query:
-        local_shows = local_shows.filter(
-            Q(title__icontains=query)
-            | Q(synopsis__icontains=query)
-            | Q(network__icontains=query)
-            | Q(genres__name__icontains=query)
-        ).distinct()
+        local_shows = local_shows.filter(Q(title__icontains=query)).distinct()
     local_shows = local_shows.order_by("-external_rating", "title")[:8]
+    return JsonResponse({"query": query, "results": [_search_result(show) for show in local_shows]})
+
+
+def external_search(request):
+    """Fetch supplemental TVmaze matches after the local catalog is already visible."""
+    query = request.GET.get("q", "").strip()
+    if len(query) < 2:
+        return JsonResponse({"query": query, "results": []})
+
+    tvmaze_matches = search_tvmaze_shows(query)[:12]
+    imported_ids = set(
+        Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+            source_name="TVmaze",
+            source_id__in=[show["id"] for show in tvmaze_matches],
+        ).values_list("source_id", flat=True)
+    )
     results = [
         {
-            "title": show.title,
-            "meta": f"TV · {show.premiered_on.year}" if show.premiered_on else "TV series",
-            "poster": show.poster_url,
-            "url": show.get_absolute_url(),
-            "source": "WatchVault",
+            "title": show["title"],
+            "meta": "TVmaze match",
+            "poster": show["poster_url"],
+            "url": show["source_url"],
+            "source": "TVmaze",
         }
-        for show in local_shows
+        for show in tvmaze_matches
+        if show["id"] not in imported_ids
     ]
-    if query:
-        local_source_ids = set(
-            Show.objects.filter(status=Show.Status.PUBLISHED, source_name="TVmaze").values_list("source_id", flat=True)
-        )
-        for show in search_tvmaze_shows(query):
-            if show["id"] not in local_source_ids:
-                results.append(
-                    {
-                        "title": show["title"],
-                        "meta": "TVmaze match",
-                        "poster": show["poster_url"],
-                        "url": show["source_url"],
-                        "source": "TVmaze",
-                    }
-                )
-            if len(results) >= 12:
-                break
     return JsonResponse({"query": query, "results": results[:12]})
 
 

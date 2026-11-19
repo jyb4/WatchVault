@@ -2,7 +2,7 @@
 
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 from html import unescape
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
-from .models import Genre, Show
+from .models import ExternalSearchCache, Genre, Show
 
 
 def _plain_text(value):
@@ -28,6 +28,15 @@ def search_shows(query):
     cached_results = cache.get(cache_key)
     if cached_results is not None:
         return cached_results
+
+    normalized_query = query.casefold()
+    persistent_cache = ExternalSearchCache.objects.filter(
+        query=normalized_query,
+        expires_at__gt=timezone.now(),
+    ).first()
+    if persistent_cache:
+        cache.set(cache_key, persistent_cache.results, timeout=900)
+        return persistent_cache.results
 
     url = f"{settings.TVMAZE_BASE_URL}/search/shows?{urlencode({'q': query})}"
     request = Request(
@@ -57,6 +66,10 @@ def search_shows(query):
         )
 
     cache.set(cache_key, results, timeout=900)
+    ExternalSearchCache.objects.update_or_create(
+        query=normalized_query,
+        defaults={"results": results, "expires_at": timezone.now() + timedelta(minutes=15)},
+    )
     return results
 
 

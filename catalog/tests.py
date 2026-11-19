@@ -1,10 +1,13 @@
 from unittest.mock import patch
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
-from .models import Genre, Show, WatchlistItem
+from django.utils import timezone
+from .models import ExternalSearchCache, Genre, Show, WatchlistItem
+from .tvmaze import search_shows
 
 
 @override_settings(
@@ -70,11 +73,41 @@ class CatalogVisibilityTests(TestCase):
         self.assertRedirects(response, reverse("watchlist"))
         self.assertTrue(get_user_model().objects.filter(username="new-member").exists())
 
-    @patch("catalog.views.search_tvmaze_shows", return_value=[])
-    def test_live_search_returns_matching_local_shows(self, _tvmaze_search):
+    @patch("catalog.views.search_tvmaze_shows")
+    def test_local_search_returns_matching_catalog_shows_without_calling_tvmaze(self, tvmaze_search):
         Show.objects.create(title="The Flash", slug="the-flash", status=Show.Status.PUBLISHED)
 
-        response = self.client.get(reverse("live-search"), {"q": "flash"})
+        response = self.client.get(reverse("local-search"), {"q": "flash"})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["results"][0]["title"], "The Flash")
+        tvmaze_search.assert_not_called()
+
+    @patch("catalog.views.search_tvmaze_shows")
+    def test_external_search_excludes_titles_already_imported(self, tvmaze_search):
+        Show.objects.create(
+            title="The Flash", slug="the-flash", status=Show.Status.PUBLISHED,
+            source_name="TVmaze", source_id="1",
+        )
+        tvmaze_search.return_value = [
+            {"id": "1", "title": "The Flash", "poster_url": "", "source_url": "https://example.com/flash"},
+            {"id": "2", "title": "Flashpoint", "poster_url": "", "source_url": "https://example.com/flashpoint"},
+        ]
+
+        response = self.client.get(reverse("external-search"), {"q": "flash"})
+
+        self.assertEqual(response.json()["results"], [{
+            "title": "Flashpoint", "meta": "TVmaze match", "poster": "",
+            "url": "https://example.com/flashpoint", "source": "TVmaze",
+        }])
+
+    @patch("catalog.tvmaze.urlopen")
+    def test_tvmaze_search_reuses_shared_database_cache(self, urlopen):
+        ExternalSearchCache.objects.create(
+            query="shared-cache-check",
+            results=[{"id": "1", "title": "The Flash"}],
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+
+        self.assertEqual(search_shows("shared-cache-check"), [{"id": "1", "title": "The Flash"}])
+        urlopen.assert_not_called()

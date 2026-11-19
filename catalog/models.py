@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.urls import reverse
 
@@ -42,12 +43,22 @@ class Show(models.Model):
     class Meta:
         ordering = ["title"]
         constraints = [models.UniqueConstraint(fields=["source_name", "source_id"], name="unique_show_source")]
+        indexes = [GinIndex(fields=["title"], name="show_title_trgm_idx", opclasses=["gin_trgm_ops"])]
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
         return reverse("show-detail", kwargs={"slug": self.slug})
+
+
+class ExternalSearchCache(models.Model):
+    """Short-lived shared cache for supplemental TVmaze search results."""
+
+    query = models.CharField(max_length=255, unique=True)
+    results = models.JSONField(default=list)
+    expires_at = models.DateTimeField(db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class WatchlistItem(models.Model):

@@ -6,29 +6,44 @@
   const open = document.querySelector("[data-search-open]");
   const close = document.querySelector("[data-search-close]");
   if (!dialog || !input || !results || !status || !open || !close) return;
-  let timer;
-  let controller;
-  const render = (items) => {
+  let externalTimer;
+  let localController;
+  let externalController;
+  let localItems = [];
+  let externalItems = [];
+  const localCache = new Map();
+  const render = () => {
+    const items = [...localItems, ...externalItems];
     results.replaceChildren();
     if (!items.length) { results.textContent = "No matching shows found."; return; }
     items.forEach((item, index) => {
       const link = document.createElement("a"); link.href = item.url; link.className = "live-result";
       if (item.source === "TVmaze") { link.target = "_blank"; link.rel = "noopener noreferrer"; }
       const rank = document.createElement("b"); rank.textContent = String(index + 1).padStart(2, "0");
-      const image = document.createElement("img"); image.src = item.poster || ""; image.alt = item.poster ? `Poster for ${item.title}` : "";
+      const image = document.createElement("img"); image.src = item.poster || ""; image.alt = item.poster ? `Poster for ${item.title}` : ""; image.loading = "lazy"; image.decoding = "async";
       const text = document.createElement("span"); const title = document.createElement("strong"); title.textContent = item.title; const meta = document.createElement("small"); meta.textContent = `${item.meta} · ${item.source}`; text.append(title, meta);
       const arrow = document.createElement("i"); arrow.textContent = "›"; link.append(rank, image, text, arrow); results.append(link);
     });
   };
-  const load = async () => {
+  const loadLocal = async () => {
     const query = input.value.trim();
-    if (controller) controller.abort(); controller = new AbortController(); status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault";
-    try { const response = await fetch(`/api/live-search/?q=${encodeURIComponent(query)}`, { signal: controller.signal }); const data = await response.json(); render(data.results); }
+    if (localController) localController.abort(); localController = new AbortController();
+    externalItems = [];
+    if (localCache.has(query)) { localItems = localCache.get(query); render(); return; }
+    try { const response = await fetch(`/api/local-search/?q=${encodeURIComponent(query)}`, { signal: localController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; localItems = data.results; localCache.set(query, data.results); render(); }
     catch (error) { if (error.name !== "AbortError") results.textContent = "Search is temporarily unavailable."; }
   };
-  const show = () => { dialog.showModal(); input.focus(); load(); };
+  const loadExternal = async () => {
+    const query = input.value.trim();
+    if (query.length < 2) return;
+    if (externalController) externalController.abort(); externalController = new AbortController();
+    try { const response = await fetch(`/api/external-search/?q=${encodeURIComponent(query)}`, { signal: externalController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; externalItems = data.results; status.textContent = `Search results for “${query}”`; render(); }
+    catch (error) { if (error.name !== "AbortError") status.textContent = "Showing WatchVault matches"; }
+  };
+  const search = () => { clearTimeout(externalTimer); if (externalController) externalController.abort(); const query = input.value.trim(); status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault"; loadLocal(); externalTimer = setTimeout(loadExternal, 300); };
+  const show = () => { dialog.showModal(); input.focus(); search(); };
   open.addEventListener("click", show); close.addEventListener("click", () => dialog.close());
-  input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 250); });
+  input.addEventListener("input", search);
   document.addEventListener("keydown", (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); show(); } });
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 })();
