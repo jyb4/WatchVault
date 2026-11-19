@@ -60,6 +60,7 @@ def search_shows(query):
                 "summary": _plain_text(show.get("summary")),
                 "poster_url": image.get("medium") or image.get("original", ""),
                 "rating": (show.get("rating") or {}).get("average"),
+                "weight": show.get("weight", 0),
                 "genres": show.get("genres", []),
                 "source_url": show.get("url", ""),
             }

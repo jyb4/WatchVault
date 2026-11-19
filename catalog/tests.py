@@ -126,16 +126,15 @@ class CatalogVisibilityTests(TestCase):
         }])
 
     @patch("catalog.views.search_tvmaze_shows")
-    def test_external_search_relaxes_an_unfinished_final_word(self, tvmaze_search):
-        tvmaze_search.side_effect = [[], [{
-            "id": "52", "title": "How to Get Away with Murder", "poster_url": "",
-            "source_url": "https://example.com/how-to-get-away", "rating": 8.1,
-        }]]
+    def test_external_search_prioritizes_popularity_after_prefix_match(self, tvmaze_search):
+        tvmaze_search.return_value = [
+            {"id": "1", "title": "Flash Gordon", "poster_url": "", "source_url": "https://example.com/gordon", "rating": 7.0, "weight": 10},
+            {"id": "2", "title": "The Flash", "poster_url": "", "source_url": "https://example.com/flash", "rating": 7.6, "weight": 100},
+        ]
 
-        response = self.client.get(reverse("external-search"), {"q": "how to get away with qwerty"})
+        response = self.client.get(reverse("external-search"), {"q": "fla"})
 
-        self.assertEqual(response.json()["results"][0]["title"], "How to Get Away with Murder")
-        self.assertEqual(tvmaze_search.call_args_list[1].args[0], "how to get away with")
+        self.assertEqual(response.json()["results"][0]["title"], "The Flash")
 
     @patch("catalog.views.search_tvmaze_shows")
     def test_external_search_excludes_titles_already_in_popular_index(self, tvmaze_search):

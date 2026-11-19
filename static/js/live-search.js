@@ -6,7 +6,7 @@
   const open = document.querySelector("[data-search-open]");
   const close = document.querySelector("[data-search-close]");
   if (!dialog || !input || !results || !status || !open || !close) return;
-  let externalTimer;
+  let searchTimer;
   let localController;
   let externalController;
   let localItems = [];
@@ -15,7 +15,7 @@
   let externalLoading = false;
   const localCache = new Map();
   const render = () => {
-    const items = [...localItems, ...externalItems];
+    const items = [...localItems, ...externalItems].filter((item, index, all) => all.findIndex((candidate) => candidate.url === item.url) === index).slice(0, 8);
     results.replaceChildren();
     if (!items.length) {
       results.textContent = (localLoading || externalLoading) ? "Searching for shows…" : "No matching shows found.";
@@ -25,7 +25,7 @@
       const link = document.createElement("a"); link.href = item.url; link.className = "live-result";
       if (item.source === "TVmaze") { link.target = "_blank"; link.rel = "noopener noreferrer"; }
       const rank = document.createElement("b"); rank.textContent = String(index + 1).padStart(2, "0");
-      const image = document.createElement("img"); image.src = item.poster || ""; image.alt = item.poster ? `Poster for ${item.title}` : ""; image.loading = "lazy"; image.decoding = "async";
+      const image = document.createElement("img"); image.src = item.poster || ""; image.alt = item.poster ? `Poster for ${item.title}` : ""; image.loading = "lazy"; image.decoding = "async"; image.onerror = () => { image.removeAttribute("src"); image.alt = ""; };
       const text = document.createElement("span"); const title = document.createElement("strong"); title.textContent = item.title; const meta = document.createElement("small"); meta.textContent = `${item.meta} · ${item.source}`; text.append(title, meta);
       const arrow = document.createElement("i"); arrow.textContent = "›"; link.append(rank, image, text, arrow); results.append(link);
     });
@@ -50,7 +50,19 @@
     catch (error) { if (error.name !== "AbortError") status.textContent = "Showing WatchVault matches"; }
     finally { if (input.value.trim() === query) { externalLoading = false; render(); } }
   };
-  const search = () => { clearTimeout(externalTimer); if (externalController) externalController.abort(); const query = input.value.trim(); externalLoading = query.length >= 2; status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault"; loadLocal(); externalTimer = setTimeout(loadExternal, 180); };
+  const search = () => {
+    clearTimeout(searchTimer);
+    if (localController) localController.abort();
+    if (externalController) externalController.abort();
+    const query = input.value.trim();
+    localItems = [];
+    externalItems = [];
+    localLoading = true;
+    externalLoading = query.length >= 2;
+    status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault";
+    render();
+    searchTimer = setTimeout(() => { loadLocal(); loadExternal(); }, 300);
+  };
   const show = () => { dialog.showModal(); input.focus(); search(); };
   open.addEventListener("click", show); close.addEventListener("click", () => dialog.close());
   input.addEventListener("input", search);

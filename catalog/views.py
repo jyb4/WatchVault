@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 import re
+from difflib import SequenceMatcher
 
 from django.db.models import Q
 from django.http import JsonResponse
@@ -57,8 +58,8 @@ def _ordered_word_match_count(title_words, query_words):
     return matched_words
 
 
-def _match_score(title, query, rating=0, popularity_boost=0):
-    """Favor meaningful, in-order title matches before rating-based tiebreaks."""
+def _match_score(title, query, rating=0, popularity_boost=0, weight=0):
+    """Rank title relevance first, then TVmaze popularity and rating."""
     title_words = _normalized_words(title)
     query_words = _normalized_words(query)
     if not title_words or not query_words:
@@ -67,16 +68,18 @@ def _match_score(title, query, rating=0, popularity_boost=0):
     title_text = " ".join(title_words)
     query_text = " ".join(query_words)
     if title_text == query_text:
-        relevance = 10_000
+        relevance = 1_000_000
     else:
         matched_words = _ordered_word_match_count(title_words, query_words)
-        if matched_words != len(query_words):
-            return 0
-        relevance = matched_words * 1_000 + 5_000
-        if query_text in title_text:
-            relevance += 1_000
+        if matched_words == len(query_words):
+            relevance = 900_000
+        else:
+            similarity = SequenceMatcher(None, query_text, title_text).ratio()
+            if similarity < 0.72:
+                return 0
+            relevance = 100_000 + int(similarity * 10_000)
 
-    return relevance + int(float(rating or 0) * 10) + popularity_boost
+    return relevance + int(float(weight or 0) * 100) + int(float(rating or 0) * 10) + popularity_boost
 
 
 def _index_result(entry):
@@ -90,27 +93,9 @@ def _index_result(entry):
 
 
 def _index_match_score(entry, query):
-    direct_score = max(
+    return max(
         _match_score(candidate, query, entry.external_rating, entry.popularity_boost)
         for candidate in [entry.title, *(entry.aliases or [])]
-    )
-    if direct_score:
-        return direct_score
-
-    query_words = _normalized_words(query)
-    if len(query_words) < 3:
-        return 0
-    fallback_words = query_words[:-1]
-    candidates = [entry.title, *(entry.aliases or [])]
-    if not any(
-        _ordered_word_match_count(_normalized_words(candidate), query_words) == len(fallback_words)
-        for candidate in candidates
-    ):
-        return 0
-    fallback_query = " ".join(fallback_words)
-    return max(
-        _match_score(candidate, fallback_query, entry.external_rating, entry.popularity_boost)
-        for candidate in candidates
     )
 
 
@@ -145,7 +130,7 @@ def local_search(request):
                 _index_match_score(entry, query),
             ))
     ranked_results.sort(key=lambda candidate: candidate[1], reverse=True)
-    return JsonResponse({"query": query, "results": [item for item, _score in ranked_results[:12]]})
+    return JsonResponse({"query": query, "results": [item for item, _score in ranked_results[:8]]})
 
 
 def external_search(request):
@@ -155,17 +140,6 @@ def external_search(request):
         return JsonResponse({"query": query, "results": []})
 
     tvmaze_matches = search_tvmaze_shows(query)[:12]
-    effective_query = query
-    has_strong_match = any(_match_score(show["title"], query, show.get("rating")) >= 5_000 for show in tvmaze_matches)
-    query_words = query.split()
-    if not has_strong_match and len(query_words) > 1:
-        effective_query = " ".join(query_words[:-1])
-        tvmaze_matches += search_tvmaze_shows(effective_query)[:12]
-
-    deduplicated_matches = {}
-    for show in tvmaze_matches:
-        deduplicated_matches.setdefault(show["id"], show)
-    tvmaze_matches = list(deduplicated_matches.values())
     existing_source_ids = set(
         Show.objects.filter(
             status=Show.Status.PUBLISHED,
@@ -180,7 +154,7 @@ def external_search(request):
         ).values_list("source_id", flat=True)
     )
     ranked_matches = [
-        (show, _match_score(show["title"], effective_query, show.get("rating")))
+        (show, _match_score(show["title"], query, show.get("rating"), weight=show.get("weight", 0)))
         for show in tvmaze_matches
         if show["id"] not in existing_source_ids
     ]
@@ -190,7 +164,7 @@ def external_search(request):
         "title": show["title"], "meta": "TVmaze match", "poster": show["poster_url"],
         "url": show["source_url"], "source": "TVmaze",
     } for show, _score in ranked_matches]
-    return JsonResponse({"query": query, "results": results[:12]})
+    return JsonResponse({"query": query, "results": results[:8]})
 
 
 class HomeView(ListView):
