@@ -42,6 +42,16 @@ Imported entries begin as **drafts** by default. Editors review them in Django A
 
 `WatchlistItem` links a signed-in member to a published show and prevents duplicates.
 
+### Homepage curation
+
+TVmaze imports are searchable catalog material; they are not automatic homepage placements. Editors use Django Admin to select complete records (poster art and synopsis required by the homepage) and set three placement controls on a `Show`:
+
+- **Feature on home:** hero carousel.
+- **Homepage trending:** Top Trending rail.
+- **Homepage fresh:** Freshly Added and New & Upcoming rows.
+
+`editorial_priority` is a higher-first number used to order each placement. The `seed_homepage_curation --apply --replace` command is a QA/demo convenience that selects the documented starter collection; normal editorial work should happen in `/admin/`.
+
 ## 5. TVmaze integration
 
 WatchVault imports a selected TVmaze search result rather than copying the entire TVmaze database.

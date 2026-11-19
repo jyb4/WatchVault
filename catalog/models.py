@@ -37,6 +37,18 @@ class Show(models.Model):
         default=False,
         help_text="Show this published title in the curated homepage rows.",
     )
+    homepage_trending = models.BooleanField(
+        default=False,
+        help_text="Editor-approved placement in the Top Trending rail.",
+    )
+    homepage_fresh = models.BooleanField(
+        default=False,
+        help_text="Editor-approved placement in the Freshly Added and New & Upcoming rows.",
+    )
+    editorial_priority = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Higher numbers appear first in curated homepage placements.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -172,30 +172,37 @@ class HomeView(ListView):
     context_object_name = "featured_shows"
 
     def get_queryset(self):
-        return Show.objects.filter(
+        return self._homepage_ready().filter(
             status=Show.Status.PUBLISHED,
             featured_on_home=True,
-        ).prefetch_related("genres").order_by("-external_rating", "title")[:17]
+        ).order_by("-editorial_priority", F("external_rating").desc(nulls_last=True), "title")[:17]
+
+    @staticmethod
+    def _homepage_ready():
+        """Only use complete, poster-ready records in visual homepage placements."""
+        return Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+            poster_url__gt="",
+            synopsis__gt="",
+        ).prefetch_related("genres")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         shows = list(context["featured_shows"])
         context["hero_slides"] = shows[:5]
-        context["trending"] = Show.objects.filter(
-            status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:10]
-        context["top_rated"] = Show.objects.filter(
-            status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
-        recently_added = list(Show.objects.filter(
-            status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by("-created_at")[:14])
-        context["recently_added"] = recently_added
-        context["fresh_this_week"] = Show.objects.filter(
-            status=Show.Status.PUBLISHED,
-        ).exclude(pk__in=[show.pk for show in recently_added]).prefetch_related("genres").order_by(
-            "-import_updated_at", "-created_at"
-        )[:14]
+        homepage_ready = self._homepage_ready()
+        trending = homepage_ready.filter(homepage_trending=True).order_by(
+            "-editorial_priority", F("external_rating").desc(nulls_last=True), "title"
+        )
+        context["trending"] = trending[:10] if trending.exists() else shows[:10]
+        context["top_rated"] = homepage_ready.order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
+        fresh = list(homepage_ready.filter(homepage_fresh=True).order_by(
+            "-editorial_priority", "-import_updated_at", "title"
+        )[:14])
+        if not fresh:
+            fresh = list(homepage_ready.order_by("-import_updated_at", "-created_at")[:14])
+        context["recently_added"] = fresh[:7]
+        context["fresh_this_week"] = fresh[7:14]
         context["categories"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
