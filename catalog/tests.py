@@ -100,6 +100,13 @@ class CatalogVisibilityTests(TestCase):
 
         self.assertEqual(response.json()["results"], [])
 
+    def test_local_search_normalizes_punctuation_in_indexed_titles(self):
+        SearchIndexEntry.objects.create(source_name="TVmaze", source_id="999", title="How It's Made")
+
+        response = self.client.get(reverse("local-search"), {"q": "how its made"})
+
+        self.assertEqual(response.json()["results"][0]["title"], "How It's Made")
+
     @patch("catalog.views.search_tvmaze_shows")
     def test_external_search_excludes_titles_already_imported(self, tvmaze_search):
         Show.objects.create(

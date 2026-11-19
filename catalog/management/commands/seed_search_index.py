@@ -7,7 +7,7 @@ from catalog.tvmaze import search_shows
 POPULAR_TITLES = [
     "The Flash", "How to Get Away with Murder", "Breaking Bad", "Game of Thrones",
     "Stranger Things", "The Office", "Friends", "Better Call Saul", "The Boys",
-    "The Last of Us", "House of the Dragon", "The Bear", "Dexter", "Narcos",
+    "The Last of Us", "House of the Dragon", "The Bear", "Dexter", "Narcos", "How It's Made",
 ]
 
 
