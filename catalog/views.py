@@ -43,6 +43,19 @@ def _normalized_words(value):
     return re.findall(r"[a-z0-9]+", (value or "").casefold())
 
 
+def _ordered_word_match_count(title_words, query_words):
+    position = 0
+    matched_words = 0
+    for query_word in query_words:
+        while position < len(title_words) and not title_words[position].startswith(query_word):
+            position += 1
+        if position == len(title_words):
+            break
+        matched_words += 1
+        position += 1
+    return matched_words
+
+
 def _match_score(title, query, rating=0, popularity_boost=0):
     """Favor meaningful, in-order title matches before rating-based tiebreaks."""
     title_words = _normalized_words(title)
@@ -55,20 +68,10 @@ def _match_score(title, query, rating=0, popularity_boost=0):
     if title_text == query_text:
         relevance = 10_000
     else:
-        position = 0
-        matched_words = 0
-        for query_word in query_words:
-            while position < len(title_words) and not title_words[position].startswith(query_word):
-                position += 1
-            if position == len(title_words):
-                break
-            matched_words += 1
-            position += 1
-        if not matched_words:
+        matched_words = _ordered_word_match_count(title_words, query_words)
+        if matched_words != len(query_words):
             return 0
-        relevance = matched_words * 1_000
-        if matched_words == len(query_words):
-            relevance += 5_000
+        relevance = matched_words * 1_000 + 5_000
         if query_text in title_text:
             relevance += 1_000
 
@@ -86,9 +89,27 @@ def _index_result(entry):
 
 
 def _index_match_score(entry, query):
-    return max(
+    direct_score = max(
         _match_score(candidate, query, entry.external_rating, entry.popularity_boost)
         for candidate in [entry.title, *(entry.aliases or [])]
+    )
+    if direct_score:
+        return direct_score
+
+    query_words = _normalized_words(query)
+    if len(query_words) < 3:
+        return 0
+    fallback_words = query_words[:-1]
+    candidates = [entry.title, *(entry.aliases or [])]
+    if not any(
+        _ordered_word_match_count(_normalized_words(candidate), query_words) == len(fallback_words)
+        for candidate in candidates
+    ):
+        return 0
+    fallback_query = " ".join(fallback_words)
+    return max(
+        _match_score(candidate, fallback_query, entry.external_rating, entry.popularity_boost)
+        for candidate in candidates
     )
 
 

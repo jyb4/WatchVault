@@ -93,6 +93,13 @@ class CatalogVisibilityTests(TestCase):
 
         self.assertEqual(response.json()["results"][0]["title"], "The Flash")
 
+    def test_local_search_does_not_match_only_one_word_of_a_multiword_query(self):
+        SearchIndexEntry.objects.create(source_name="TVmaze", source_id="52", title="How to Get Away with Murder")
+
+        response = self.client.get(reverse("local-search"), {"q": "how its made"})
+
+        self.assertEqual(response.json()["results"], [])
+
     @patch("catalog.views.search_tvmaze_shows")
     def test_external_search_excludes_titles_already_imported(self, tvmaze_search):
         Show.objects.create(
