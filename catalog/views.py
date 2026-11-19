@@ -181,11 +181,16 @@ class HomeView(ListView):
         context = super().get_context_data(**kwargs)
         shows = list(context["featured_shows"])
         context["hero_slides"] = shows[:5]
-        context["trending"] = shows[:8]
-        context["top_rated"] = shows[:6]
+        context["trending"] = shows[:10]
+        context["top_rated"] = Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+        ).prefetch_related("genres").order_by("-external_rating", "title")[:15]
         context["recently_added"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
-        ).prefetch_related("genres").order_by("-created_at")[:8]
+        ).prefetch_related("genres").order_by("-created_at")[:14]
+        context["fresh_this_week"] = Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+        ).prefetch_related("genres").order_by("-import_updated_at", "-created_at")[:14]
         context["categories"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]

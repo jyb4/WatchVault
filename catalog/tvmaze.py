@@ -95,6 +95,28 @@ def fetch_show(source_id):
     return show
 
 
+def fetch_web_schedule(on_date):
+    """Return scheduled streaming episodes with their TVmaze show data embedded."""
+    cache_key = f"tvmaze-web-schedule:{on_date.isoformat()}"
+    cached_schedule = cache.get(cache_key)
+    if cached_schedule is not None:
+        return cached_schedule
+
+    parameters = urlencode({"date": on_date.isoformat(), "embed": "show"})
+    request = Request(
+        f"{settings.TVMAZE_BASE_URL}/schedule/web?{parameters}",
+        headers={"Accept": "application/json", "User-Agent": settings.TVMAZE_USER_AGENT},
+    )
+    try:
+        with urlopen(request, timeout=12) as response:
+            schedule = json.load(response)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return []
+
+    cache.set(cache_key, schedule, timeout=3600)
+    return schedule
+
+
 def upsert_show(data, publish=False):
     """Store TVmaze data as a WatchVault show while preserving editorial placement."""
     premiered = data.get("premiered")
