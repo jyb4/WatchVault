@@ -181,7 +181,9 @@ class HomeView(ListView):
         context = super().get_context_data(**kwargs)
         shows = list(context["featured_shows"])
         context["hero_slides"] = shows[:5]
-        context["trending"] = shows[:10]
+        context["trending"] = Show.objects.filter(
+            status=Show.Status.PUBLISHED,
+        ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:10]
         context["top_rated"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).prefetch_related("genres").order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
