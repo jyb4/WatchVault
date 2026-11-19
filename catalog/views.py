@@ -40,7 +40,8 @@ def _search_result(show):
 
 
 def _normalized_words(value):
-    return re.findall(r"[a-z0-9]+", (value or "").casefold())
+    value = re.sub(r"['’]", "", (value or "").casefold())
+    return re.findall(r"[a-z0-9]+", value)
 
 
 def _ordered_word_match_count(title_words, query_words):
