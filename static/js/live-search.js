@@ -36,6 +36,7 @@
     externalItems = [];
     localLoading = !localCache.has(query);
     if (localCache.has(query)) { localItems = localCache.get(query); render(); return; }
+    localItems = [];
     render();
     try { const response = await fetch(`/api/local-search/?q=${encodeURIComponent(query)}`, { signal: localController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; localItems = data.results; localCache.set(query, data.results); }
     catch (error) { if (error.name !== "AbortError") results.textContent = "Search is temporarily unavailable."; }
