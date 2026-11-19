@@ -144,9 +144,15 @@ def external_search(request):
     for show in tvmaze_matches:
         deduplicated_matches.setdefault(show["id"], show)
     tvmaze_matches = list(deduplicated_matches.values())
-    imported_ids = set(
+    existing_source_ids = set(
         Show.objects.filter(
             status=Show.Status.PUBLISHED,
+            source_name="TVmaze",
+            source_id__in=[show["id"] for show in tvmaze_matches],
+        ).values_list("source_id", flat=True)
+    )
+    existing_source_ids.update(
+        SearchIndexEntry.objects.filter(
             source_name="TVmaze",
             source_id__in=[show["id"] for show in tvmaze_matches],
         ).values_list("source_id", flat=True)
@@ -154,7 +160,7 @@ def external_search(request):
     ranked_matches = [
         (show, _match_score(show["title"], effective_query, show.get("rating")))
         for show in tvmaze_matches
-        if show["id"] not in imported_ids
+        if show["id"] not in existing_source_ids
     ]
     ranked_matches = [(show, score) for show, score in ranked_matches if score]
     ranked_matches.sort(key=lambda candidate: candidate[1], reverse=True)

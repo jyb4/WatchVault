@@ -123,6 +123,18 @@ class CatalogVisibilityTests(TestCase):
         self.assertEqual(response.json()["results"][0]["title"], "How to Get Away with Murder")
         self.assertEqual(tvmaze_search.call_args_list[1].args[0], "how to get away with")
 
+    @patch("catalog.views.search_tvmaze_shows")
+    def test_external_search_excludes_titles_already_in_popular_index(self, tvmaze_search):
+        SearchIndexEntry.objects.create(source_name="TVmaze", source_id="13", title="The Flash")
+        tvmaze_search.return_value = [{
+            "id": "13", "title": "The Flash", "poster_url": "",
+            "source_url": "https://example.com/the-flash", "rating": 7.6,
+        }]
+
+        response = self.client.get(reverse("external-search"), {"q": "flash"})
+
+        self.assertEqual(response.json()["results"], [])
+
     @patch("catalog.tvmaze.urlopen")
     def test_tvmaze_search_reuses_shared_database_cache(self, urlopen):
         ExternalSearchCache.objects.create(
