@@ -2,13 +2,15 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+import re
+
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
-from .models import Show, WatchlistItem
+from .models import SearchIndexEntry, Show, WatchlistItem
 from .tvmaze import fetch_show, search_shows as search_tvmaze_shows, upsert_show
 
 
@@ -37,6 +39,59 @@ def _search_result(show):
     }
 
 
+def _normalized_words(value):
+    return re.findall(r"[a-z0-9]+", (value or "").casefold())
+
+
+def _match_score(title, query, rating=0, popularity_boost=0):
+    """Favor meaningful, in-order title matches before rating-based tiebreaks."""
+    title_words = _normalized_words(title)
+    query_words = _normalized_words(query)
+    if not title_words or not query_words:
+        return 0
+
+    title_text = " ".join(title_words)
+    query_text = " ".join(query_words)
+    if title_text == query_text:
+        relevance = 10_000
+    else:
+        position = 0
+        matched_words = 0
+        for query_word in query_words:
+            while position < len(title_words) and not title_words[position].startswith(query_word):
+                position += 1
+            if position == len(title_words):
+                break
+            matched_words += 1
+            position += 1
+        if not matched_words:
+            return 0
+        relevance = matched_words * 1_000
+        if matched_words == len(query_words):
+            relevance += 5_000
+        if query_text in title_text:
+            relevance += 1_000
+
+    return relevance + int(float(rating or 0) * 10) + popularity_boost
+
+
+def _index_result(entry):
+    return {
+        "title": entry.title,
+        "meta": "TVmaze match",
+        "poster": entry.poster_url,
+        "url": entry.source_url,
+        "source": "TVmaze",
+    }
+
+
+def _index_match_score(entry, query):
+    return max(
+        _match_score(candidate, query, entry.external_rating, entry.popularity_boost)
+        for candidate in [entry.title, *(entry.aliases or [])]
+    )
+
+
 def local_search(request):
     """Return catalog matches immediately, without waiting for an external service."""
     query = request.GET.get("q", "").strip()
@@ -44,7 +99,31 @@ def local_search(request):
     if query:
         local_shows = local_shows.filter(Q(title__icontains=query)).distinct()
     local_shows = local_shows.order_by("-external_rating", "title")[:8]
-    return JsonResponse({"query": query, "results": [_search_result(show) for show in local_shows]})
+    ranked_results = [
+        (_search_result(show), _match_score(show.title, query, show.external_rating))
+        for show in local_shows
+    ]
+    imported_source_ids = {
+        (show.source_name, show.source_id)
+        for show in local_shows
+        if show.source_name and show.source_id
+    }
+    index_entries = SearchIndexEntry.objects.all()
+    if query:
+        index_entries = [
+            entry for entry in index_entries
+            if _index_match_score(entry, query)
+        ]
+    else:
+        index_entries = index_entries.order_by("-popularity_boost", "-external_rating", "title")[:8]
+    for entry in index_entries:
+        if (entry.source_name, entry.source_id) not in imported_source_ids:
+            ranked_results.append((
+                _index_result(entry),
+                _index_match_score(entry, query),
+            ))
+    ranked_results.sort(key=lambda candidate: candidate[1], reverse=True)
+    return JsonResponse({"query": query, "results": [item for item, _score in ranked_results[:12]]})
 
 
 def external_search(request):
@@ -54,6 +133,17 @@ def external_search(request):
         return JsonResponse({"query": query, "results": []})
 
     tvmaze_matches = search_tvmaze_shows(query)[:12]
+    effective_query = query
+    has_strong_match = any(_match_score(show["title"], query, show.get("rating")) >= 5_000 for show in tvmaze_matches)
+    query_words = query.split()
+    if not has_strong_match and len(query_words) > 1:
+        effective_query = " ".join(query_words[:-1])
+        tvmaze_matches += search_tvmaze_shows(effective_query)[:12]
+
+    deduplicated_matches = {}
+    for show in tvmaze_matches:
+        deduplicated_matches.setdefault(show["id"], show)
+    tvmaze_matches = list(deduplicated_matches.values())
     imported_ids = set(
         Show.objects.filter(
             status=Show.Status.PUBLISHED,
@@ -61,17 +151,17 @@ def external_search(request):
             source_id__in=[show["id"] for show in tvmaze_matches],
         ).values_list("source_id", flat=True)
     )
-    results = [
-        {
-            "title": show["title"],
-            "meta": "TVmaze match",
-            "poster": show["poster_url"],
-            "url": show["source_url"],
-            "source": "TVmaze",
-        }
+    ranked_matches = [
+        (show, _match_score(show["title"], effective_query, show.get("rating")))
         for show in tvmaze_matches
         if show["id"] not in imported_ids
     ]
+    ranked_matches = [(show, score) for show, score in ranked_matches if score]
+    ranked_matches.sort(key=lambda candidate: candidate[1], reverse=True)
+    results = [{
+        "title": show["title"], "meta": "TVmaze match", "poster": show["poster_url"],
+        "url": show["source_url"], "source": "TVmaze",
+    } for show, _score in ranked_matches]
     return JsonResponse({"query": query, "results": results[:12]})
 
 

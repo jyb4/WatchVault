@@ -61,6 +61,24 @@ class ExternalSearchCache(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class SearchIndexEntry(models.Model):
+    """A lightweight, high-confidence title index for instant autocomplete."""
+
+    source_name = models.CharField(max_length=100)
+    source_id = models.CharField(max_length=100)
+    title = models.CharField(max_length=255)
+    aliases = models.JSONField(default=list, blank=True)
+    poster_url = models.URLField(blank=True)
+    source_url = models.URLField(blank=True)
+    external_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    popularity_boost = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["source_name", "source_id"], name="unique_search_index_source")]
+        indexes = [GinIndex(fields=["title"], name="search_index_title_trgm_idx", opclasses=["gin_trgm_ops"])]
+
+
 class WatchlistItem(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="watchlist_items")
     show = models.ForeignKey(Show, on_delete=models.CASCADE, related_name="saved_by")
