@@ -11,11 +11,16 @@
   let externalController;
   let localItems = [];
   let externalItems = [];
+  let localLoading = false;
+  let externalLoading = false;
   const localCache = new Map();
   const render = () => {
     const items = [...localItems, ...externalItems];
     results.replaceChildren();
-    if (!items.length) { results.textContent = "No matching shows found."; return; }
+    if (!items.length) {
+      results.textContent = (localLoading || externalLoading) ? "Searching for shows…" : "No matching shows found.";
+      return;
+    }
     items.forEach((item, index) => {
       const link = document.createElement("a"); link.href = item.url; link.className = "live-result";
       if (item.source === "TVmaze") { link.target = "_blank"; link.rel = "noopener noreferrer"; }
@@ -29,18 +34,22 @@
     const query = input.value.trim();
     if (localController) localController.abort(); localController = new AbortController();
     externalItems = [];
+    localLoading = !localCache.has(query);
     if (localCache.has(query)) { localItems = localCache.get(query); render(); return; }
-    try { const response = await fetch(`/api/local-search/?q=${encodeURIComponent(query)}`, { signal: localController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; localItems = data.results; localCache.set(query, data.results); render(); }
+    render();
+    try { const response = await fetch(`/api/local-search/?q=${encodeURIComponent(query)}`, { signal: localController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; localItems = data.results; localCache.set(query, data.results); }
     catch (error) { if (error.name !== "AbortError") results.textContent = "Search is temporarily unavailable."; }
+    finally { if (input.value.trim() === query) { localLoading = false; render(); } }
   };
   const loadExternal = async () => {
     const query = input.value.trim();
     if (query.length < 2) return;
     if (externalController) externalController.abort(); externalController = new AbortController();
-    try { const response = await fetch(`/api/external-search/?q=${encodeURIComponent(query)}`, { signal: externalController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; externalItems = data.results; status.textContent = `Search results for “${query}”`; render(); }
+    try { const response = await fetch(`/api/external-search/?q=${encodeURIComponent(query)}`, { signal: externalController.signal }); const data = await response.json(); if (input.value.trim() !== query) return; externalItems = data.results; status.textContent = `Search results for “${query}”`; }
     catch (error) { if (error.name !== "AbortError") status.textContent = "Showing WatchVault matches"; }
+    finally { if (input.value.trim() === query) { externalLoading = false; render(); } }
   };
-  const search = () => { clearTimeout(externalTimer); if (externalController) externalController.abort(); const query = input.value.trim(); status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault"; loadLocal(); externalTimer = setTimeout(loadExternal, 300); };
+  const search = () => { clearTimeout(externalTimer); if (externalController) externalController.abort(); const query = input.value.trim(); externalLoading = query.length >= 2; status.textContent = query ? `Searching for “${query}”` : "Trending in WatchVault"; loadLocal(); externalTimer = setTimeout(loadExternal, 180); };
   const show = () => { dialog.showModal(); input.focus(); search(); };
   open.addEventListener("click", show); close.addEventListener("click", () => dialog.close());
   input.addEventListener("input", search);
