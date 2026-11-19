@@ -46,6 +46,7 @@ This is the chronological record of progress, decisions, and next work. Update i
 - The project now has a production Compose configuration, Caddy HTTPS reverse proxy, environment template, deployment runbook, and GitHub Actions test workflow.
 - WatchVault replaced the prior placeholder container on `jybdeployment.com` after a separate port-8090 staging check. The stopped `jyb-prod` container is retained on the server as a rollback option.
 - Homepage placement is now an editorial CMS decision: imports stay searchable while Admin controls hero, trending, fresh rows, and higher-first placement priority.
+- QA refreshes TVmaze schedule data daily at 6:00 AM America/New_York through the deploy account's versioned cron job; a manual validation processed 36 records and added one new show without changing editorial homepage placements.
 - The redesigned discovery experience was staged, tested, and promoted with 18 published TVmaze shows and catalog search across titles, genres, networks, and descriptions.
 - The QA dashboard now uses an original app-style discovery layout: responsive desktop/sidebar and mobile navigation, an editorial featured carousel, dynamic trending/recently-added rails, and a visual personal watchlist.
 
