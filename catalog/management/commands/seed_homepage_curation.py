@@ -38,7 +38,8 @@ class Command(BaseCommand):
         for position, show in enumerate(ordered, start=1):
             show.featured_on_home = position <= 5
             show.homepage_trending = position <= 10
-            show.homepage_fresh = position <= 14
+            # A few editor pins lead Fresh; the remaining slots fill from the daily quality import.
+            show.homepage_fresh = 6 <= position <= 8
             show.editorial_priority = len(ordered) - position + 1
             show.save(update_fields=("featured_on_home", "homepage_trending", "homepage_fresh", "editorial_priority"))
         self.stdout.write(self.style.SUCCESS("Homepage curation saved."))

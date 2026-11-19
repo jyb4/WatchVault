@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Discover | WatchVault{% endblock %}
 {% block content %}
-<section class="catalog-page">
-  <p class="eyebrow">THE CATALOG</p>
-  <h1>Discover your next show.</h1>
-  <form class="search-form" method="get">
+<section class="catalog-page vault-page">
+  <div class="vault-page-intro"><p class="eyebrow">THE CATALOG</p><h1>Discover your next show.</h1><p>Search the WatchVault catalog and find your next series.</p></div>
+  <form class="search-form vault-search-form" method="get">
     <label for="q">Search WatchVault and TVmaze</label>
     <div><input id="q" name="q" value="{{ query }}" placeholder="Search any TV show by name" autofocus><button type="submit">Search</button></div>
   </form>

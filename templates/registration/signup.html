@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Create an account | WatchVault{% endblock %}
 {% block content %}
-<section class="section auth-page">
+<section class="auth-page vault-page">
   <p class="eyebrow">MEMBER ACCESS</p>
   <h1>Create your WatchVault account</h1>
   <p class="result-summary">Save any TVmaze result to your personal watchlist.</p>
@@ -9,7 +9,7 @@
     {% csrf_token %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     {{ form.as_p }}
-    <button type="submit">Create account</button>
+    <button class="button vault-button" type="submit">Create account</button>
   </form>
   <p>Already have an account? <a href="{% url 'login' %}?next={{ next|urlencode }}">Sign in</a>.</p>
 </section>

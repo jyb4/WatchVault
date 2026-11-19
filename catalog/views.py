@@ -196,11 +196,13 @@ class HomeView(ListView):
         )
         context["trending"] = trending[:10] if trending.exists() else shows[:10]
         context["top_rated"] = homepage_ready.order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
-        fresh = list(homepage_ready.filter(homepage_fresh=True).order_by(
+        pinned_fresh = list(homepage_ready.filter(homepage_fresh=True).order_by(
             "-editorial_priority", "-import_updated_at", "title"
         )[:14])
-        if not fresh:
-            fresh = list(homepage_ready.order_by("-import_updated_at", "-created_at")[:14])
+        automatic_fresh = homepage_ready.exclude(pk__in=[show.pk for show in pinned_fresh]).filter(
+            external_rating__isnull=False,
+        ).order_by("-import_updated_at", "-created_at")
+        fresh = (pinned_fresh + list(automatic_fresh[:max(0, 14 - len(pinned_fresh))]))[:14]
         context["recently_added"] = fresh[:7]
         context["fresh_this_week"] = fresh[7:14]
         context["categories"] = Show.objects.filter(
