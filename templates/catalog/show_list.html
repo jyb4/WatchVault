@@ -3,14 +3,11 @@
 {% block content %}
 <section class="catalog-page vault-page">
   <div class="vault-page-intro"><p class="eyebrow">THE CATALOG</p><h1>Discover your next show.</h1><p>Search the WatchVault catalog and find your next series.</p></div>
-  <form class="search-form vault-search-form" method="get">
-    <label for="q">Search WatchVault and TVmaze</label>
-    <div><input id="q" name="q" value="{{ query }}" placeholder="Search any TV show by name" autofocus><button type="submit">Search</button></div>
-  </form>
+  <div class="catalog-search-cta"><div><b>Quick search</b><span>Search WatchVault and TVmaze without leaving this page.</span></div><button class="button vault-button" type="button" data-search-open>Search TV shows</button></div>
   {% if query %}<p class="result-summary">Results for “{{ query }}”</p>{% endif %}
   {% if shows %}
     {% if query %}<h2 class="results-heading">In WatchVault</h2>{% endif %}
-    <div class="show-grid">{% for show in shows %}<article class="show-card"><a href="{{ show.get_absolute_url }}">{% if show.poster_url %}<img src="{{ show.poster_url }}" alt="Poster for {{ show.title }}">{% endif %}<div class="card-body"><h2>{{ show.title }}</h2><p class="card-genres">{% for genre in show.genres.all %}{{ genre.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% if show.external_rating %}<p class="rating">★ {{ show.external_rating }}/10</p>{% endif %}</div></a></article>{% endfor %}</div>
+    <div class="premium-grid catalog-card-grid">{% for show in shows %}{% include "catalog/partials/home_show_card.html" with show=show %}{% endfor %}</div>
   {% endif %}
   {% if external_results %}
     <section class="external-results" aria-labelledby="tvmaze-results">

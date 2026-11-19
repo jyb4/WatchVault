@@ -54,6 +54,10 @@ TVmaze imports are searchable catalog material; they are not automatic homepage 
 
 The QA server runs the `deploy` account's `watchvault-qa-tvmaze-sync.sh` cron job daily at 6:00 AM America/New_York. Its bounded schedule import keeps the catalog and hybrid Fresh fallback current, but does not alter hero, Trending, or editor-pinned Fresh placement.
 
+### Editorial review queue
+
+New TVmaze imports with a poster, synopsis, and rating enter **Shows → Editorial review → Ready for review** in Django Admin. Selecting a homepage placement or using **Mark selected shows as reviewed** removes an item from that queue. **Return selected shows to the review queue** reverses that decision. Existing catalog content is recorded as reviewed when this workflow is introduced, so the queue starts with genuinely new imports.
+
 ## 5. TVmaze integration
 
 WatchVault imports a selected TVmaze search result rather than copying the entire TVmaze database.

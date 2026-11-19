@@ -49,6 +49,11 @@ class Show(models.Model):
         default=0,
         help_text="Higher numbers appear first in curated homepage placements.",
     )
+    editorial_reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When an editor last reviewed this imported record for homepage use.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

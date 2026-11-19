@@ -3,9 +3,9 @@
   const input = document.querySelector("[data-live-search]");
   const results = document.querySelector("[data-live-results]");
   const status = document.querySelector("[data-search-status]");
-  const open = document.querySelector("[data-search-open]");
+  const opens = [...document.querySelectorAll("[data-search-open]")];
   const close = document.querySelector("[data-search-close]");
-  if (!dialog || !input || !results || !status || !open || !close) return;
+  if (!dialog || !input || !results || !status || !opens.length || !close) return;
   let searchTimer;
   let localController;
   let externalController;
@@ -64,7 +64,7 @@
     searchTimer = setTimeout(() => { loadLocal(); loadExternal(); }, 300);
   };
   const show = () => { dialog.showModal(); input.focus(); search(); };
-  open.addEventListener("click", show); close.addEventListener("click", () => dialog.close());
+  opens.forEach((open) => open.addEventListener("click", show)); close.addEventListener("click", () => dialog.close());
   input.addEventListener("input", search);
   document.addEventListener("keydown", (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); show(); } });
   dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });

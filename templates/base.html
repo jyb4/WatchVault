@@ -14,7 +14,7 @@
 </head>
 <body class="streaming-shell">
   <header class="streaming-header" data-header>
-    <details class="compact-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span></summary><nav><a href="{% url 'home' %}">Home</a><a href="{% url 'show-list' %}">TV Shows</a><a href="{% url 'home' %}#trending">Trending</a><a href="{% url 'home' %}#categories">Categories</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}">My List</a>{% endif %}</nav></details>
+    <details class="compact-menu"><summary aria-label="Open site menu"><span aria-hidden="true">☰</span></summary><nav><a href="{% url 'home' %}">Home</a><a href="{% url 'show-list' %}">TV Shows</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}">My List</a>{% endif %}</nav></details>
     <a class="brand streaming-brand" href="{% url 'home' %}">Watch<span>Vault</span></a>
     <button class="search-trigger" type="button" data-search-open><span aria-hidden="true">⌕</span><span>Search TV shows</span><kbd>Ctrl</kbd><kbd>S</kbd></button>
     <div class="account-actions">{% if user.is_authenticated %}<a class="profile-link" href="{% url 'watchlist' %}"><span aria-hidden="true">●</span> My List</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
@@ -24,6 +24,7 @@
   <dialog class="search-overlay" data-search-dialog aria-labelledby="search-title"><div class="search-panel"><div class="search-panel-head"><p id="search-title">QUICK SEARCH <kbd>CTRL</kbd> + <kbd>S</kbd></p><button type="button" data-search-close aria-label="Close search">×</button></div><div class="overlay-search-box"><label class="sr-only" for="live-search-input">Search TV shows</label><input id="live-search-input" type="search" autocomplete="off" placeholder="Search any TV show..." data-live-search><span aria-hidden="true">⌕</span></div><p class="search-status" data-search-status>Trending in WatchVault</p><div class="live-results" data-live-results aria-live="polite"></div></div></dialog>
   <script src="{% static 'js/header.js' %}" defer></script>
   <script src="{% static 'js/live-search.js' %}" defer></script>
+  <script src="{% static 'js/home-cards.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
