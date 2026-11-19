@@ -1,0 +1,2 @@
+CRON_TZ=America/New_York
+0 6 * * * /home/deploy/WatchVault/deploy/cron/watchvault-qa-tvmaze-sync.sh >> /home/deploy/WatchVault/logs/tvmaze-sync.log 2>&1

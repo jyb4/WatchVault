@@ -52,7 +52,7 @@ TVmaze imports are searchable catalog material; they are not automatic homepage 
 
 `editorial_priority` is a higher-first number used to order each placement. The `seed_homepage_curation --apply --replace` command is a QA/demo convenience that selects the documented starter collection; normal editorial work should happen in `/admin/`.
 
-The QA server runs `watchvault-qa-tvmaze-sync.timer` daily at 6:00 AM America/New_York. Its bounded schedule import keeps the catalog and hybrid Fresh fallback current, but does not alter hero, Trending, or editor-pinned Fresh placement.
+The QA server runs the `deploy` account's `watchvault-qa-tvmaze-sync.sh` cron job daily at 6:00 AM America/New_York. Its bounded schedule import keeps the catalog and hybrid Fresh fallback current, but does not alter hero, Trending, or editor-pinned Fresh placement.
 
 ## 5. TVmaze integration
 

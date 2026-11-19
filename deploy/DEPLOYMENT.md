@@ -39,22 +39,21 @@ docker compose -f compose.production.yaml up --build --detach
 
 ## QA daily TVmaze refresh
 
-QA uses a systemd timer to refresh the searchable TVmaze catalog every morning at 6:00 AM America/New_York. It runs the bounded `sync_tvmaze_schedule --days 7 --limit 36` command inside the QA container. The task only imports or updates catalog records; it does not change the editorial hero, Trending, or pinned Fresh choices.
+QA uses the `deploy` account's cron schedule to refresh the searchable TVmaze catalog every morning at 6:00 AM America/New_York. It runs the bounded `sync_tvmaze_schedule --days 7 --limit 36` command inside the QA container. The task only imports or updates catalog records; it does not change the editorial hero, Trending, or pinned Fresh choices.
 
-The versioned unit files are in `deploy/systemd/`. After a QA deployment that changes them, install and enable them once:
+The versioned runner is `deploy/cron/watchvault-qa-tvmaze-sync.sh`. Install it once after pulling a release:
 
 ```text
-sudo install -m 644 deploy/systemd/watchvault-qa-tvmaze-sync.service /etc/systemd/system/
-sudo install -m 644 deploy/systemd/watchvault-qa-tvmaze-sync.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now watchvault-qa-tvmaze-sync.timer
+chmod 755 deploy/cron/watchvault-qa-tvmaze-sync.sh
+mkdir -p logs
+crontab deploy/cron/watchvault-qa-tvmaze-sync.crontab
 ```
 
-Check the next scheduled run and recent result with:
+Check the schedule and most recent result with:
 
 ```text
-systemctl list-timers watchvault-qa-tvmaze-sync.timer
-sudo journalctl -u watchvault-qa-tvmaze-sync.service --since today --no-pager
+crontab -l
+tail -n 100 logs/tvmaze-sync.log
 ```
 
 ## Local testing
