@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the WatchVault QA TVmaze catalog
+Wants=network-online.target
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/deploy/WatchVault
+TimeoutStartSec=15min
+ExecStart=/usr/bin/docker compose --env-file /home/deploy/WatchVault/.env.staging -f /home/deploy/WatchVault/compose.production.yaml --project-name watchvault-staging exec -T web python manage.py sync_tvmaze_schedule --days 7 --limit 36

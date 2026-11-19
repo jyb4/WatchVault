@@ -37,6 +37,26 @@ docker compose -f compose.production.yaml up --build --detach
 - Do not expose PostgreSQL ports publicly.
 - Add server monitoring and a scheduled backup before inviting users.
 
+## QA daily TVmaze refresh
+
+QA uses a systemd timer to refresh the searchable TVmaze catalog every morning at 6:00 AM America/New_York. It runs the bounded `sync_tvmaze_schedule --days 7 --limit 36` command inside the QA container. The task only imports or updates catalog records; it does not change the editorial hero, Trending, or pinned Fresh choices.
+
+The versioned unit files are in `deploy/systemd/`. After a QA deployment that changes them, install and enable them once:
+
+```text
+sudo install -m 644 deploy/systemd/watchvault-qa-tvmaze-sync.service /etc/systemd/system/
+sudo install -m 644 deploy/systemd/watchvault-qa-tvmaze-sync.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now watchvault-qa-tvmaze-sync.timer
+```
+
+Check the next scheduled run and recent result with:
+
+```text
+systemctl list-timers watchvault-qa-tvmaze-sync.timer
+sudo journalctl -u watchvault-qa-tvmaze-sync.service --since today --no-pager
+```
+
 ## Local testing
 
 Start Docker Desktop, then use the development configuration:

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the WatchVault QA TVmaze refresh every morning
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 America/New_York
+Persistent=true
+RandomizedDelaySec=3min
+Unit=watchvault-qa-tvmaze-sync.service
+
+[Install]
+WantedBy=timers.target
