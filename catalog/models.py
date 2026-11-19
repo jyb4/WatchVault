@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+from django.utils import timezone
 from django.urls import reverse
 
 
@@ -97,10 +98,20 @@ class SearchIndexEntry(models.Model):
 
 
 class WatchlistItem(models.Model):
+    class Status(models.TextChoices):
+        PLAN_TO_WATCH = "plan", "Plan to Watch"
+        WATCHING = "watching", "Watching"
+        COMPLETED = "completed", "Completed"
+        DROPPED = "dropped", "Dropped"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="watchlist_items")
     show = models.ForeignKey(Show, on_delete=models.CASCADE, related_name="saved_by")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PLAN_TO_WATCH)
+    current_season = models.PositiveSmallIntegerField(null=True, blank=True)
+    current_episode = models.PositiveSmallIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    last_updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "show"], name="unique_watchlist_item")]
-        ordering = ["-created_at"]
+        ordering = ["-last_updated_at", "-created_at"]

@@ -1,0 +1,10 @@
+<article class="watchlist-item-card">
+  <a class="watchlist-show-link" href="{{ item.show.get_absolute_url }}"><span class="home-card-art">{% if item.show.poster_url %}<img data-poster-image src="{{ item.show.poster_url }}" alt="Poster for {{ item.show.title }}">{% endif %}<span class="poster-fallback home-poster-fallback{% if item.show.poster_url %} is-hidden{% endif %}" data-poster-fallback aria-label="No poster artwork"><strong>{{ item.show.title|slice:":1" }}</strong><small>NO POSTER</small></span><span class="rating-badge">★ {% if item.show.external_rating %}{{ item.show.external_rating }}{% else %}N/A{% endif %}</span></span><span class="home-card-body"><b title="{{ item.show.title }}">{{ item.show.title }}</b><small>{{ item.get_status_display }}</small></span></a>
+  <form class="watchlist-controls" method="post" action="{% url 'watchlist-update' item.show.slug %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{% url 'watchlist' %}">
+    <label><span>Status</span><select name="status">{% for value, label in watchlist_statuses %}<option value="{{ value }}"{% if item.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <div class="watchlist-progress-fields"><label><span>Season</span><input name="current_season" type="number" min="1" inputmode="numeric" value="{{ item.current_season|default_if_none:'' }}" placeholder="—"></label><label><span>Episode</span><input name="current_episode" type="number" min="1" inputmode="numeric" value="{{ item.current_episode|default_if_none:'' }}" placeholder="—"></label></div>
+    <button type="submit">Save</button>
+  </form>
+  <form class="watchlist-remove-form" method="post" action="{% url 'watchlist-remove' item.show.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'watchlist' %}"><button type="submit">Remove</button></form>
+</article>

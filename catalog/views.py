@@ -6,8 +6,9 @@ import re
 from difflib import SequenceMatcher
 
 from django.db.models import F, Q
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
@@ -208,11 +209,12 @@ class HomeView(ListView):
         context["categories"] = Show.objects.filter(
             status=Show.Status.PUBLISHED,
         ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
-        context["watchlist_shows"] = []
+        context["continue_watching_items"] = []
         if self.request.user.is_authenticated:
-            context["watchlist_shows"] = [
-                item.show for item in WatchlistItem.objects.filter(user=self.request.user).select_related("show")[:8]
-            ]
+            context["continue_watching_items"] = WatchlistItem.objects.filter(
+                user=self.request.user,
+                status=WatchlistItem.Status.WATCHING,
+            ).select_related("show").prefetch_related("show__genres").order_by("-last_updated_at")[:8]
         return context
 
 
@@ -253,9 +255,12 @@ class ShowDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["saved"] = self.request.user.is_authenticated and WatchlistItem.objects.filter(
-            user=self.request.user, show=self.object
-        ).exists()
+        context["watchlist_item"] = None
+        if self.request.user.is_authenticated:
+            context["watchlist_item"] = WatchlistItem.objects.filter(
+                user=self.request.user, show=self.object
+            ).first()
+        context["watchlist_statuses"] = WatchlistItem.Status.choices
         return context
 
 
@@ -264,7 +269,12 @@ class WatchlistView(LoginRequiredMixin, ListView):
     context_object_name = "items"
 
     def get_queryset(self):
-        return WatchlistItem.objects.filter(user=self.request.user).select_related("show")
+        return WatchlistItem.objects.filter(user=self.request.user).select_related("show").prefetch_related("show__genres")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["watchlist_statuses"] = WatchlistItem.Status.choices
+        return context
 
 
 @login_required
@@ -280,7 +290,52 @@ def add_to_watchlist(request, slug):
 def remove_from_watchlist(request, slug):
     show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
     WatchlistItem.objects.filter(user=request.user, show=show).delete()
+    return _watchlist_redirect(request, show)
+
+
+def _progress_value(request, field_name):
+    value = request.POST.get(field_name, "").strip()
+    if not value:
+        return None
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{field_name.replace('_', ' ').capitalize()} must be a whole number.")
+    if number < 1:
+        raise ValueError(f"{field_name.replace('_', ' ').capitalize()} must be at least 1.")
+    return number
+
+
+def _watchlist_redirect(request, show):
+    next_url = request.POST.get("next", "")
+    if url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
+        return redirect(next_url)
     return redirect(show)
+
+
+@login_required
+@require_POST
+def update_watchlist_item(request, slug):
+    """Save one member's tracking status and optional viewing progress."""
+    show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
+    item = get_object_or_404(WatchlistItem, user=request.user, show=show)
+    status = request.POST.get("status", "").strip()
+    if status not in WatchlistItem.Status.values:
+        return HttpResponseBadRequest("Choose a valid watchlist status.")
+    try:
+        season = _progress_value(request, "current_season")
+        episode = _progress_value(request, "current_episode")
+    except ValueError as error:
+        return HttpResponseBadRequest(str(error))
+    if episode is not None and season is None:
+        return HttpResponseBadRequest("Add a season before saving an episode.")
+
+    item.status = status
+    item.current_season = season
+    item.current_episode = episode
+    item.last_updated_at = timezone.now()
+    item.save(update_fields=["status", "current_season", "current_episode", "last_updated_at"])
+    return _watchlist_redirect(request, show)
 
 
 @login_required

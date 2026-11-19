@@ -73,6 +73,71 @@ class CatalogVisibilityTests(TestCase):
         self.assertRedirects(response, reverse("watchlist"))
         self.assertTrue(get_user_model().objects.filter(username="new-member").exists())
 
+    def test_member_can_track_status_and_progress_for_own_show(self):
+        user = get_user_model().objects.create_user(username="viewer", password="test-password")
+        show = Show.objects.create(title="Tracked Show", slug="tracked-show", status=Show.Status.PUBLISHED)
+        item = WatchlistItem.objects.create(user=user, show=show)
+        previous_update = item.last_updated_at
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("watchlist-update", args=[show.slug]), {
+            "status": WatchlistItem.Status.WATCHING,
+            "current_season": "2",
+            "current_episode": "4",
+        })
+
+        self.assertRedirects(response, show.get_absolute_url())
+        item.refresh_from_db()
+        self.assertEqual(item.status, WatchlistItem.Status.WATCHING)
+        self.assertEqual(item.current_season, 2)
+        self.assertEqual(item.current_episode, 4)
+        self.assertGreaterEqual(item.last_updated_at, previous_update)
+
+    def test_member_cannot_update_someone_elses_watchlist_item(self):
+        owner = get_user_model().objects.create_user(username="owner", password="test-password")
+        other_user = get_user_model().objects.create_user(username="other", password="test-password")
+        show = Show.objects.create(title="Private Tracking", slug="private-tracking", status=Show.Status.PUBLISHED)
+        item = WatchlistItem.objects.create(user=owner, show=show)
+        self.client.force_login(other_user)
+
+        response = self.client.post(reverse("watchlist-update", args=[show.slug]), {"status": "completed"})
+
+        self.assertEqual(response.status_code, 404)
+        item.refresh_from_db()
+        self.assertEqual(item.status, WatchlistItem.Status.PLAN_TO_WATCH)
+
+    def test_tracking_rejects_an_episode_without_a_season(self):
+        user = get_user_model().objects.create_user(username="validator", password="test-password")
+        show = Show.objects.create(title="Validated Show", slug="validated-show", status=Show.Status.PUBLISHED)
+        WatchlistItem.objects.create(user=user, show=show)
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("watchlist-update", args=[show.slug]), {
+            "status": "watching", "current_episode": "3",
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_home_continue_watching_only_includes_watching_items_in_update_order(self):
+        user = get_user_model().objects.create_user(username="home-viewer", password="test-password")
+        older = Show.objects.create(title="Older Progress", slug="older-progress", status=Show.Status.PUBLISHED, poster_url="https://example.com/older.jpg", synopsis="A complete show.")
+        newer = Show.objects.create(title="Newer Progress", slug="newer-progress", status=Show.Status.PUBLISHED, poster_url="https://example.com/newer.jpg", synopsis="A complete show.")
+        planned = Show.objects.create(title="Planned Only", slug="planned-only", status=Show.Status.PUBLISHED, poster_url="https://example.com/planned.jpg", synopsis="A complete show.")
+        WatchlistItem.objects.create(user=user, show=older, status=WatchlistItem.Status.WATCHING, current_season=1, current_episode=2, last_updated_at=timezone.now() - timedelta(days=1))
+        WatchlistItem.objects.create(user=user, show=newer, status=WatchlistItem.Status.WATCHING, current_season=3, current_episode=5)
+        WatchlistItem.objects.create(user=user, show=planned, status=WatchlistItem.Status.PLAN_TO_WATCH)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "Continue Watching")
+        self.assertContains(response, "S3 · E5")
+        self.assertEqual(
+            [item.show.title for item in response.context["continue_watching_items"]],
+            ["Newer Progress", "Older Progress"],
+        )
+        self.assertLess(response.content.find(b"Newer Progress"), response.content.find(b"Older Progress"))
+
     @patch("catalog.views.search_tvmaze_shows")
     def test_local_search_returns_matching_catalog_shows_without_calling_tvmaze(self, tvmaze_search):
         Show.objects.create(title="The Flash", slug="the-flash", status=Show.Status.PUBLISHED)
