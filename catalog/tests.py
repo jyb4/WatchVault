@@ -183,11 +183,24 @@ class CatalogVisibilityTests(TestCase):
 
         self.assertContains(response, "Continue Watching")
         self.assertContains(response, "Season 3 · Episode 5")
+        self.assertContains(response, "Remove Newer Progress from my watchlist")
         self.assertEqual(
             [item.show.title for item in response.context["continue_watching_items"]],
             ["Newer Progress", "Older Progress"],
         )
         self.assertLess(response.content.find(b"Newer Progress"), response.content.find(b"Older Progress"))
+
+    def test_watchlist_cards_do_not_render_inline_tracking_controls(self):
+        user = get_user_model().objects.create_user(username="clean-list", password="test-password")
+        show = Show.objects.create(title="Clean Card", slug="clean-card", status=Show.Status.PUBLISHED)
+        WatchlistItem.objects.create(user=user, show=show, status=WatchlistItem.Status.WATCHING)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("watchlist"))
+
+        self.assertContains(response, "Clean Card")
+        self.assertNotContains(response, 'name="current_season"')
+        self.assertNotContains(response, 'name="status"')
 
     @patch("catalog.views.search_tvmaze_shows")
     def test_local_search_returns_matching_catalog_shows_without_calling_tvmaze(self, tvmaze_search):
