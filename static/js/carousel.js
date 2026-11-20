@@ -30,6 +30,29 @@
       });
     });
 
+    carousel.querySelector("[data-carousel-prev]")?.addEventListener("click", () => {
+      show(current - 1);
+      startRotation();
+    });
+    carousel.querySelector("[data-carousel-next]")?.addEventListener("click", () => {
+      show(current + 1);
+      startRotation();
+    });
+
+    let swipeStart = null;
+    carousel.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button, a")) return;
+      swipeStart = event.clientX;
+    });
+    carousel.addEventListener("pointerup", (event) => {
+      if (swipeStart === null) return;
+      const distance = event.clientX - swipeStart;
+      swipeStart = null;
+      if (Math.abs(distance) < 50) return;
+      show(current + (distance < 0 ? 1 : -1));
+      startRotation();
+    });
+
     carousel.addEventListener("mouseenter", stopRotation);
     carousel.addEventListener("mouseleave", startRotation);
     carousel.addEventListener("focusin", stopRotation);
