@@ -22,7 +22,6 @@
     <button class="search-trigger" type="button" data-search-open><span aria-hidden="true">⌕</span><span>Search TV shows</span><kbd>Ctrl</kbd><kbd>S</kbd></button>
     <div class="account-actions">{% if user.is_authenticated %}<a class="profile-link" href="{% url 'watchlist' %}"><span aria-hidden="true">●</span> My List</a>{% else %}<a href="{% url 'login' %}">Sign in</a><a class="join-link" href="{% url 'signup' %}">Join free</a>{% endif %}</div>
   </header>
-  <aside class="v2-dock" data-v2-dock aria-label="Quick navigation"><a href="{% url 'home' %}" aria-label="Home" title="Home">⌂</a><button type="button" data-search-open aria-label="Search" title="Search">⌕</button><a href="{% url 'show-list' %}" aria-label="Browse shows" title="Browse shows">▦</a>{% if user.is_authenticated %}<a href="{% url 'watchlist' %}" aria-label="My List" title="My List">♥</a>{% endif %}<a href="{% url 'home' %}#trending" aria-label="Trending" title="Trending">⌁</a><i></i><button type="button" data-v2-dock-reset aria-label="Reset dock position" title="Reset dock position">↺</button></aside>
   <main class="streaming-main">{% block content %}{% endblock %}</main>
   <footer class="streaming-footer"><div><a class="brand" href="{% url 'home' %}">Watch<span>Vault</span></a><p>Discover and track your next great TV show.</p></div><div><a href="{% url 'show-list' %}">Browse shows</a><a href="{% url 'watchlist' %}">My List</a><a href="https://www.tvmaze.com/">TVmaze data</a></div><p>© {% now "Y" %} WatchVault</p></footer>
   <dialog class="search-overlay" data-search-dialog aria-labelledby="search-title"><div class="search-panel"><div class="search-panel-head"><p id="search-title">QUICK SEARCH <kbd>CTRL</kbd> + <kbd>S</kbd></p><button type="button" data-search-close aria-label="Close search">×</button></div><div class="overlay-search-box"><label class="sr-only" for="live-search-input">Search TV shows</label><input id="live-search-input" type="search" autocomplete="off" placeholder="Search any TV show..." data-live-search><span aria-hidden="true">⌕</span></div><p class="search-status" data-search-status>Trending in WatchVault</p><div class="live-results" data-live-results aria-live="polite"></div></div></dialog>
@@ -30,7 +29,6 @@
   <script src="{% static 'js/live-search.js' %}" defer></script>
   <script src="{% static 'js/home-cards.js' %}" defer></script>
   <script src="{% static 'js/async-watchlist.js' %}" defer></script>
-  <script src="{% static 'js/design-v2-dock.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
