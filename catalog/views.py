@@ -318,8 +318,8 @@ class WatchlistView(LoginRequiredMixin, ListView):
 @require_POST
 def add_to_watchlist(request, slug):
     show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
-    WatchlistItem.objects.get_or_create(user=request.user, show=show)
-    return redirect(show)
+    item, _created = WatchlistItem.objects.get_or_create(user=request.user, show=show)
+    return _watchlist_response(request, show, "added", item)
 
 
 @login_required
@@ -327,7 +327,7 @@ def add_to_watchlist(request, slug):
 def remove_from_watchlist(request, slug):
     show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
     WatchlistItem.objects.filter(user=request.user, show=show).delete()
-    return _watchlist_redirect(request, show)
+    return _watchlist_response(request, show, "removed")
 
 
 def _progress_value(request, field_name):
@@ -348,6 +348,36 @@ def _watchlist_redirect(request, show):
     if url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
         return redirect(next_url)
     return redirect(show)
+
+
+def _watchlist_response(request, show, action, item=None, episodes=None):
+    """Keep form redirects as a fallback while supporting in-place UI updates."""
+    if "application/json" not in request.headers.get("Accept", ""):
+        return _watchlist_redirect(request, show)
+
+    payload = {"action": action, "show_slug": show.slug}
+    if item is not None:
+        payload.update({
+            "status": item.status,
+            "status_display": item.get_status_display(),
+            "season": item.current_season,
+            "episode": item.current_episode,
+        })
+        if episodes and item.current_season and item.current_episode:
+            season_episodes = [entry for entry in episodes if entry["season"] == item.current_season]
+            current_index = next((
+                index for index, entry in enumerate(season_episodes)
+                if entry["number"] == item.current_episode
+            ), None)
+            if current_index is not None:
+                current_episode = season_episodes[current_index]
+                payload.update({
+                    "episode_title": current_episode["title"],
+                    "season_episode_total": len(season_episodes),
+                    "progress_percent": round((current_index / len(season_episodes)) * 100) if season_episodes else 0,
+                    "is_season_finale": current_index == len(season_episodes) - 1,
+                })
+    return JsonResponse(payload)
 
 
 @login_required
@@ -374,7 +404,7 @@ def update_watchlist_item(request, slug):
     item.current_episode = episode
     item.last_updated_at = timezone.now()
     item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
-    return _watchlist_redirect(request, show)
+    return _watchlist_response(request, show, "updated", item)
 
 
 @login_required
@@ -391,8 +421,9 @@ def set_episode_progress(request, slug):
         return HttpResponseBadRequest("Choose both a season and an episode.")
     if show.source_name != "TVmaze" or not show.source_id:
         return HttpResponseBadRequest("Episode tracking is unavailable for this show.")
+    episodes = fetch_show_episodes(show.source_id)
     selected_episode = next((
-        entry for entry in fetch_show_episodes(show.source_id)
+        entry for entry in episodes
         if entry["season"] == season and entry["number"] == episode
     ), None)
     if selected_episode is None:
@@ -405,7 +436,7 @@ def set_episode_progress(request, slug):
     item.current_episode_image_url = selected_episode["image_url"]
     item.last_updated_at = timezone.now()
     item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
-    return _watchlist_redirect(request, show)
+    return _watchlist_response(request, show, "episode-set", item, episodes)
 
 
 @login_required
@@ -433,7 +464,7 @@ def mark_episode_watched(request, slug):
         item.current_episode_image_url = next_episode["image_url"]
     item.last_updated_at = timezone.now()
     item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
-    return _watchlist_redirect(request, show)
+    return _watchlist_response(request, show, "episode-watched", item, episodes)
 
 
 @login_required

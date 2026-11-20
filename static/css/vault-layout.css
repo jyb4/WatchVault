@@ -42,6 +42,9 @@
 /* Keep the episode action visually identical in Up Next and My List. */
 .vault-page .up-next-copy form button{width:100%!important;min-height:34px!important;padding:.45rem .65rem!important;border:1px solid #2859a7!important;border-radius:.45rem!important;background:#14294d!important;color:#79b5ff!important;box-shadow:none!important;font:inherit!important;font-size:.73rem!important;font-weight:850!important}.vault-page .up-next-copy form button:hover{background:#1c396b!important;color:#dfeeff!important;transform:none!important}
 
+/* Quiet in-place feedback for saved watchlist actions. */
+.watchlist-notice{position:fixed;z-index:50;right:1rem;bottom:1rem;max-width:min(340px,calc(100vw - 2rem));margin:0;padding:.7rem .9rem;border:1px solid rgba(76,153,255,.42);border-radius:.45rem;background:#111a2a;color:#dceaff;font-size:.8rem;font-weight:750;box-shadow:0 14px 34px rgba(0,0,0,.35);opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .18s ease,transform .18s ease}.watchlist-notice.is-visible{opacity:1;transform:translateY(0)}.watchlist-notice.is-error{border-color:rgba(255,125,143,.6);color:#ffd8df}.up-next-card.is-leaving{opacity:0;transform:scale(.97);transition:opacity .2s ease,transform .2s ease}
+
 /* Extra catalog depth replaces the former genre marketing block. */
 .more-shows-section{margin-bottom:3.8rem}.expanded-home-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 
