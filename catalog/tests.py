@@ -143,7 +143,7 @@ class CatalogVisibilityTests(TestCase):
             source_name="TVmaze", source_id="402",
         )
         fetch_show_episodes.return_value = [{
-            "season": 2, "number": 6, "title": "Chapter Six", "summary": "", "airdate": "", "runtime": None, "image_url": "",
+            "season": 2, "number": 6, "title": "Chapter Six", "summary": "", "airdate": "", "runtime": None, "image_url": "https://example.com/chapter-six.jpg",
         }]
         self.client.force_login(user)
 
@@ -153,6 +153,7 @@ class CatalogVisibilityTests(TestCase):
         item = WatchlistItem.objects.get(user=user, show=show)
         self.assertEqual(item.status, WatchlistItem.Status.WATCHING)
         self.assertEqual((item.current_season, item.current_episode), (2, 6))
+        self.assertEqual(item.current_episode_image_url, "https://example.com/chapter-six.jpg")
 
     @patch("catalog.views.fetch_show_episodes", return_value=[])
     def test_episode_progress_rejects_an_episode_not_returned_by_tvmaze(self, _episodes):
@@ -181,7 +182,7 @@ class CatalogVisibilityTests(TestCase):
         response = self.client.get(reverse("home"))
 
         self.assertContains(response, "Continue Watching")
-        self.assertContains(response, "S3 · E5")
+        self.assertContains(response, "Season 3 · Episode 5")
         self.assertEqual(
             [item.show.title for item in response.context["continue_watching_items"]],
             ["Newer Progress", "Older Progress"],

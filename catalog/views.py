@@ -338,10 +338,12 @@ def update_watchlist_item(request, slug):
         return HttpResponseBadRequest("Add a season before saving an episode.")
 
     item.status = status
+    if (item.current_season, item.current_episode) != (season, episode):
+        item.current_episode_image_url = ""
     item.current_season = season
     item.current_episode = episode
     item.last_updated_at = timezone.now()
-    item.save(update_fields=["status", "current_season", "current_episode", "last_updated_at"])
+    item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
     return _watchlist_redirect(request, show)
 
 
@@ -359,19 +361,20 @@ def set_episode_progress(request, slug):
         return HttpResponseBadRequest("Choose both a season and an episode.")
     if show.source_name != "TVmaze" or not show.source_id:
         return HttpResponseBadRequest("Episode tracking is unavailable for this show.")
-    exists = any(
-        entry["season"] == season and entry["number"] == episode
-        for entry in fetch_show_episodes(show.source_id)
-    )
-    if not exists:
+    selected_episode = next((
+        entry for entry in fetch_show_episodes(show.source_id)
+        if entry["season"] == season and entry["number"] == episode
+    ), None)
+    if selected_episode is None:
         return HttpResponseBadRequest("That episode is not available for this show.")
 
     item, _created = WatchlistItem.objects.get_or_create(user=request.user, show=show)
     item.status = WatchlistItem.Status.WATCHING
     item.current_season = season
     item.current_episode = episode
+    item.current_episode_image_url = selected_episode["image_url"]
     item.last_updated_at = timezone.now()
-    item.save(update_fields=["status", "current_season", "current_episode", "last_updated_at"])
+    item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
     return _watchlist_redirect(request, show)
 
 

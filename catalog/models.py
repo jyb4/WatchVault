@@ -109,6 +109,7 @@ class WatchlistItem(models.Model):
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PLAN_TO_WATCH)
     current_season = models.PositiveSmallIntegerField(null=True, blank=True)
     current_episode = models.PositiveSmallIntegerField(null=True, blank=True)
+    current_episode_image_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated_at = models.DateTimeField(default=timezone.now)
 

@@ -11,25 +11,13 @@
   {% if show.source_url %}<p><a class="detail-source" href="{{ show.source_url }}">TVmaze source</a></p>{% endif %}
   {% if user.is_authenticated %}
     {% if watchlist_item %}
-      <section class="watch-tracker" aria-label="Watchlist tracking">
-        <p class="eyebrow">MY WATCHLIST</p>
-        <form method="post" action="{% url 'watchlist-update' show.slug %}">{% csrf_token %}
-          <input type="hidden" name="next" value="{{ request.path }}">
-          <div class="watch-tracker-fields">
-            <label>Status<select name="status">{% for value, label in watchlist_statuses %}<option value="{{ value }}"{% if watchlist_item.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-            <label>Season<input name="current_season" type="number" min="1" inputmode="numeric" value="{{ watchlist_item.current_season|default_if_none:'' }}" placeholder="1"></label>
-            <label>Episode<input name="current_episode" type="number" min="1" inputmode="numeric" value="{{ watchlist_item.current_episode|default_if_none:'' }}" placeholder="1"></label>
-          </div>
-          <div class="watch-tracker-actions"><button class="button vault-button" type="submit">Save progress</button></div>
-        </form>
-        <form class="tracker-remove-form" method="post" action="{% url 'watchlist-remove' show.slug %}">{% csrf_token %}<button class="tracker-remove" type="submit">Remove from watchlist</button></form>
-      </section>
+      <div class="detail-progress-summary"><span>In your list · {{ watchlist_item.get_status_display }}</span>{% if watchlist_item.current_season %}<strong>Current: S{{ watchlist_item.current_season }} · E{{ watchlist_item.current_episode }}</strong>{% endif %}<a href="#episodes">Choose an episode</a></div>
     {% else %}<form method="post" action="{% url 'watchlist-add' show.slug %}">{% csrf_token %}<button class="button vault-button" type="submit">Add to my watchlist</button></form>{% endif %}
   {% else %}<a class="button vault-button" href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to save</a>{% endif %}
   </div>
 </article>
 
-<section class="episode-browser vault-page" data-episode-browser>
+<section id="episodes" class="episode-browser vault-page" data-episode-browser>
   <div class="episode-browser-heading"><div><p class="eyebrow">EPISODE GUIDE</p><h2>Explore every season</h2><p>Browse episode details and artwork. Pick an episode to update your progress.</p></div></div>
   {% if episode_seasons %}
     <div class="season-tabs" role="tablist" aria-label="Seasons">
