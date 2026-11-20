@@ -109,6 +109,7 @@
         } else if (action === "mark-watched") {
           updateTrackingCard(form, data);
         }
+        if (!["add", "remove"].includes(action) && document.contains(button)) button.disabled = false;
       } catch (error) {
         announce(error.message || "We could not save that change.", true);
         button.disabled = false;
