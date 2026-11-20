@@ -222,7 +222,8 @@ class HomeView(ListView):
             "-editorial_priority", F("external_rating").desc(nulls_last=True), "title"
         )
         context["trending"] = trending[:10] if trending.exists() else shows[:10]
-        context["top_rated"] = homepage_ready.order_by(F("external_rating").desc(nulls_last=True), "title")[:15]
+        top_rated = list(homepage_ready.order_by(F("external_rating").desc(nulls_last=True), "title")[:15])
+        context["top_rated"] = top_rated
         pinned_fresh = list(homepage_ready.filter(homepage_fresh=True).order_by(
             "-editorial_priority", "-import_updated_at", "title"
         )[:14])
@@ -232,9 +233,10 @@ class HomeView(ListView):
         fresh = (pinned_fresh + list(automatic_fresh[:max(0, 14 - len(pinned_fresh))]))[:14]
         context["recently_added"] = fresh[:7]
         context["fresh_this_week"] = fresh[7:14]
-        context["categories"] = Show.objects.filter(
-            status=Show.Status.PUBLISHED,
-        ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
+        displayed_ids = {show.pk for show in top_rated + fresh}
+        context["more_to_explore"] = homepage_ready.exclude(pk__in=displayed_ids).order_by(
+            "-editorial_priority", F("external_rating").desc(nulls_last=True), "title"
+        )[:20]
         context["continue_watching_items"] = []
         if self.request.user.is_authenticated:
             items = WatchlistItem.objects.filter(
