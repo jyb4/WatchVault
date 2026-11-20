@@ -38,3 +38,6 @@
 
 /* My List lives inside .vault-page, whose generic form rule is intentionally overridden here. */
 .vault-page .continue-remove-form button{display:grid!important;width:26px!important;height:26px!important;min-height:26px!important;padding:0!important;place-items:center;border:1px solid rgba(255,255,255,.23)!important;border-radius:50%!important;background:rgba(5,7,11,.82)!important;color:#fff!important;font-size:1.15rem!important;line-height:1!important;box-shadow:none!important}.vault-page .continue-remove-form button:hover{border-color:#ff9aa8!important;background:#642335!important;color:#fff!important;transform:none!important}
+
+/* Keep the episode action visually identical in Up Next and My List. */
+.vault-page .up-next-copy form button{width:100%!important;min-height:34px!important;padding:.45rem .65rem!important;border:1px solid #2859a7!important;border-radius:.45rem!important;background:#14294d!important;color:#79b5ff!important;box-shadow:none!important;font:inherit!important;font-size:.73rem!important;font-weight:850!important}.vault-page .up-next-copy form button:hover{background:#1c396b!important;color:#dfeeff!important;transform:none!important}
