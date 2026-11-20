@@ -193,12 +193,17 @@ class CatalogVisibilityTests(TestCase):
     def test_watchlist_cards_do_not_render_inline_tracking_controls(self):
         user = get_user_model().objects.create_user(username="clean-list", password="test-password")
         show = Show.objects.create(title="Clean Card", slug="clean-card", status=Show.Status.PUBLISHED)
-        WatchlistItem.objects.create(user=user, show=show, status=WatchlistItem.Status.WATCHING)
+        WatchlistItem.objects.create(
+            user=user, show=show, status=WatchlistItem.Status.WATCHING,
+            current_season=2, current_episode=7,
+        )
         self.client.force_login(user)
 
         response = self.client.get(reverse("watchlist"))
 
         self.assertContains(response, "Clean Card")
+        self.assertContains(response, "S2 · E7")
+        self.assertContains(response, "Remove Clean Card from my watchlist")
         self.assertNotContains(response, 'name="current_season"')
         self.assertNotContains(response, 'name="status"')
 
