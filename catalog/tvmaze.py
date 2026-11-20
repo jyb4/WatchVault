@@ -95,6 +95,44 @@ def fetch_show(source_id):
     return show
 
 
+def fetch_show_episodes(source_id):
+    """Return a cached, display-ready episode list for one TVmaze show."""
+    cache_key = f"tvmaze-show-episodes:{source_id}"
+    cached_episodes = cache.get(cache_key)
+    if cached_episodes is not None:
+        return cached_episodes
+
+    request = Request(
+        f"{settings.TVMAZE_BASE_URL}/shows/{source_id}/episodes",
+        headers={"Accept": "application/json", "User-Agent": settings.TVMAZE_USER_AGENT},
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            payload = json.load(response)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return []
+
+    episodes = []
+    for episode in payload:
+        season = episode.get("season")
+        number = episode.get("number")
+        if not isinstance(season, int) or not isinstance(number, int) or season < 1 or number < 1:
+            continue
+        image = episode.get("image") or {}
+        episodes.append({
+            "season": season,
+            "number": number,
+            "title": episode.get("name") or f"Episode {number}",
+            "summary": _plain_text(episode.get("summary")),
+            "airdate": episode.get("airdate") or "",
+            "runtime": episode.get("runtime"),
+            "image_url": image.get("medium") or image.get("original") or "",
+        })
+
+    cache.set(cache_key, episodes, timeout=21600)
+    return episodes
+
+
 def fetch_web_schedule(on_date):
     """Return scheduled streaming episodes with their TVmaze show data embedded."""
     cache_key = f"tvmaze-web-schedule:{on_date.isoformat()}"

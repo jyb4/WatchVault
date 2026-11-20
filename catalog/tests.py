@@ -118,6 +118,56 @@ class CatalogVisibilityTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    @patch("catalog.views.fetch_show_episodes")
+    def test_show_detail_displays_public_episode_guide(self, fetch_show_episodes):
+        show = Show.objects.create(
+            title="Episode Guide", slug="episode-guide", status=Show.Status.PUBLISHED,
+            source_name="TVmaze", source_id="401",
+        )
+        fetch_show_episodes.return_value = [{
+            "season": 1, "number": 1, "title": "Pilot", "summary": "The story begins.",
+            "airdate": "2026-01-01", "runtime": 45, "image_url": "https://example.com/pilot.jpg",
+        }]
+
+        response = self.client.get(show.get_absolute_url())
+
+        self.assertContains(response, "Explore every season")
+        self.assertContains(response, "Pilot")
+        self.assertContains(response, "Sign in to track")
+
+    @patch("catalog.views.fetch_show_episodes")
+    def test_member_can_set_progress_from_a_verified_episode(self, fetch_show_episodes):
+        user = get_user_model().objects.create_user(username="episode-viewer", password="test-password")
+        show = Show.objects.create(
+            title="Episode Progress", slug="episode-progress", status=Show.Status.PUBLISHED,
+            source_name="TVmaze", source_id="402",
+        )
+        fetch_show_episodes.return_value = [{
+            "season": 2, "number": 6, "title": "Chapter Six", "summary": "", "airdate": "", "runtime": None, "image_url": "",
+        }]
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("watchlist-episode-progress", args=[show.slug]), {"season": "2", "episode": "6"})
+
+        self.assertRedirects(response, show.get_absolute_url())
+        item = WatchlistItem.objects.get(user=user, show=show)
+        self.assertEqual(item.status, WatchlistItem.Status.WATCHING)
+        self.assertEqual((item.current_season, item.current_episode), (2, 6))
+
+    @patch("catalog.views.fetch_show_episodes", return_value=[])
+    def test_episode_progress_rejects_an_episode_not_returned_by_tvmaze(self, _episodes):
+        user = get_user_model().objects.create_user(username="episode-validator", password="test-password")
+        show = Show.objects.create(
+            title="No Episode", slug="no-episode", status=Show.Status.PUBLISHED,
+            source_name="TVmaze", source_id="403",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("watchlist-episode-progress", args=[show.slug]), {"season": "1", "episode": "1"})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(WatchlistItem.objects.filter(user=user, show=show).exists())
+
     def test_home_continue_watching_only_includes_watching_items_in_update_order(self):
         user = get_user_model().objects.create_user(username="home-viewer", password="test-password")
         older = Show.objects.create(title="Older Progress", slug="older-progress", status=Show.Status.PUBLISHED, poster_url="https://example.com/older.jpg", synopsis="A complete show.")

@@ -13,7 +13,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from .models import SearchIndexEntry, Show, WatchlistItem
-from .tvmaze import fetch_show, search_shows as search_tvmaze_shows, upsert_show
+from .tvmaze import fetch_show, fetch_show_episodes, search_shows as search_tvmaze_shows, upsert_show
 
 
 def signup(request):
@@ -261,6 +261,13 @@ class ShowDetailView(DetailView):
                 user=self.request.user, show=self.object
             ).first()
         context["watchlist_statuses"] = WatchlistItem.Status.choices
+        episodes = []
+        if self.object.source_name == "TVmaze" and self.object.source_id:
+            episodes = fetch_show_episodes(self.object.source_id)
+        seasons = {}
+        for episode in episodes:
+            seasons.setdefault(episode["season"], []).append(episode)
+        context["episode_seasons"] = sorted(seasons.items())
         return context
 
 
@@ -331,6 +338,36 @@ def update_watchlist_item(request, slug):
         return HttpResponseBadRequest("Add a season before saving an episode.")
 
     item.status = status
+    item.current_season = season
+    item.current_episode = episode
+    item.last_updated_at = timezone.now()
+    item.save(update_fields=["status", "current_season", "current_episode", "last_updated_at"])
+    return _watchlist_redirect(request, show)
+
+
+@login_required
+@require_POST
+def set_episode_progress(request, slug):
+    """Set the selected, verified episode as a member's current progress."""
+    show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
+    try:
+        season = _progress_value(request, "season")
+        episode = _progress_value(request, "episode")
+    except ValueError as error:
+        return HttpResponseBadRequest(str(error))
+    if season is None or episode is None:
+        return HttpResponseBadRequest("Choose both a season and an episode.")
+    if show.source_name != "TVmaze" or not show.source_id:
+        return HttpResponseBadRequest("Episode tracking is unavailable for this show.")
+    exists = any(
+        entry["season"] == season and entry["number"] == episode
+        for entry in fetch_show_episodes(show.source_id)
+    )
+    if not exists:
+        return HttpResponseBadRequest("That episode is not available for this show.")
+
+    item, _created = WatchlistItem.objects.get_or_create(user=request.user, show=show)
+    item.status = WatchlistItem.Status.WATCHING
     item.current_season = season
     item.current_episode = episode
     item.last_updated_at = timezone.now()
