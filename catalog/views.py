@@ -187,6 +187,32 @@ class HomeView(ListView):
             synopsis__gt="",
         ).prefetch_related("genres")
 
+    @staticmethod
+    def _decorate_up_next_item(item):
+        """Attach lightweight episode-guide details used by the home tracker card."""
+        item.current_episode_title = "Choose an episode"
+        item.season_episode_total = 0
+        item.progress_percent = 0
+        item.is_season_finale = False
+        show = item.show
+        if not (show.source_name == "TVmaze" and show.source_id and item.current_season and item.current_episode):
+            return item
+
+        episodes = fetch_show_episodes(show.source_id)
+        season_episodes = [entry for entry in episodes if entry["season"] == item.current_season]
+        selected_index = next((
+            index for index, entry in enumerate(season_episodes)
+            if entry["number"] == item.current_episode
+        ), None)
+        if selected_index is None:
+            return item
+        selected = season_episodes[selected_index]
+        item.current_episode_title = selected["title"]
+        item.season_episode_total = len(season_episodes)
+        item.progress_percent = round((selected_index / len(season_episodes)) * 100) if season_episodes else 0
+        item.is_season_finale = selected_index == len(season_episodes) - 1
+        return item
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         shows = list(context["featured_shows"])
@@ -211,10 +237,11 @@ class HomeView(ListView):
         ).values_list("genres__name", flat=True).distinct().order_by("genres__name")[:8]
         context["continue_watching_items"] = []
         if self.request.user.is_authenticated:
-            context["continue_watching_items"] = WatchlistItem.objects.filter(
+            items = WatchlistItem.objects.filter(
                 user=self.request.user,
                 status=WatchlistItem.Status.WATCHING,
             ).select_related("show").prefetch_related("show__genres").order_by("-last_updated_at")[:8]
+            context["continue_watching_items"] = [self._decorate_up_next_item(item) for item in items]
         return context
 
 
@@ -373,6 +400,34 @@ def set_episode_progress(request, slug):
     item.current_season = season
     item.current_episode = episode
     item.current_episode_image_url = selected_episode["image_url"]
+    item.last_updated_at = timezone.now()
+    item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
+    return _watchlist_redirect(request, show)
+
+
+@login_required
+@require_POST
+def mark_episode_watched(request, slug):
+    """Advance a member to the next TVMaze episode, or complete a finale."""
+    show = get_object_or_404(Show, slug=slug, status=Show.Status.PUBLISHED)
+    item = get_object_or_404(WatchlistItem, user=request.user, show=show)
+    if not (show.source_name == "TVmaze" and show.source_id and item.current_season and item.current_episode):
+        return HttpResponseBadRequest("Choose an episode before marking it watched.")
+    episodes = fetch_show_episodes(show.source_id)
+    current_index = next((
+        index for index, entry in enumerate(episodes)
+        if entry["season"] == item.current_season and entry["number"] == item.current_episode
+    ), None)
+    if current_index is None:
+        return HttpResponseBadRequest("That episode is no longer available for this show.")
+
+    next_episode = episodes[current_index + 1] if current_index + 1 < len(episodes) else None
+    if next_episode is None:
+        item.status = WatchlistItem.Status.COMPLETED
+    else:
+        item.current_season = next_episode["season"]
+        item.current_episode = next_episode["number"]
+        item.current_episode_image_url = next_episode["image_url"]
     item.last_updated_at = timezone.now()
     item.save(update_fields=["status", "current_season", "current_episode", "current_episode_image_url", "last_updated_at"])
     return _watchlist_redirect(request, show)

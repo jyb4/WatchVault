@@ -169,7 +169,7 @@ class CatalogVisibilityTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(WatchlistItem.objects.filter(user=user, show=show).exists())
 
-    def test_home_continue_watching_only_includes_watching_items_in_update_order(self):
+    def test_home_up_next_only_includes_watching_items_in_update_order(self):
         user = get_user_model().objects.create_user(username="home-viewer", password="test-password")
         older = Show.objects.create(title="Older Progress", slug="older-progress", status=Show.Status.PUBLISHED, poster_url="https://example.com/older.jpg", synopsis="A complete show.")
         newer = Show.objects.create(title="Newer Progress", slug="newer-progress", status=Show.Status.PUBLISHED, poster_url="https://example.com/newer.jpg", synopsis="A complete show.")
@@ -181,14 +181,38 @@ class CatalogVisibilityTests(TestCase):
 
         response = self.client.get(reverse("home"))
 
-        self.assertContains(response, "Continue Watching")
-        self.assertContains(response, "Season 3 · Episode 5")
+        self.assertContains(response, "Up Next to Watch")
+        self.assertContains(response, "S3 · E5")
         self.assertContains(response, "Remove Newer Progress from my watchlist")
         self.assertEqual(
             [item.show.title for item in response.context["continue_watching_items"]],
             ["Newer Progress", "Older Progress"],
         )
         self.assertLess(response.content.find(b"Newer Progress"), response.content.find(b"Older Progress"))
+
+    @patch("catalog.views.fetch_show_episodes")
+    def test_mark_watched_advances_to_the_next_episode(self, fetch_show_episodes):
+        user = get_user_model().objects.create_user(username="episode-marker", password="test-password")
+        show = Show.objects.create(
+            title="Advance Progress", slug="advance-progress", status=Show.Status.PUBLISHED,
+            source_name="TVmaze", source_id="404",
+        )
+        WatchlistItem.objects.create(
+            user=user, show=show, status=WatchlistItem.Status.WATCHING,
+            current_season=1, current_episode=1,
+        )
+        fetch_show_episodes.return_value = [
+            {"season": 1, "number": 1, "title": "Start", "summary": "", "airdate": "", "runtime": None, "image_url": "https://example.com/one.jpg"},
+            {"season": 1, "number": 2, "title": "Next", "summary": "", "airdate": "", "runtime": None, "image_url": "https://example.com/two.jpg"},
+        ]
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("watchlist-mark-watched", args=[show.slug]))
+
+        self.assertRedirects(response, show.get_absolute_url())
+        item = WatchlistItem.objects.get(user=user, show=show)
+        self.assertEqual((item.current_season, item.current_episode), (1, 2))
+        self.assertEqual(item.current_episode_image_url, "https://example.com/two.jpg")
 
     def test_watchlist_cards_do_not_render_inline_tracking_controls(self):
         user = get_user_model().objects.create_user(username="clean-list", password="test-password")
