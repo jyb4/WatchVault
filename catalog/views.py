@@ -307,6 +307,7 @@ class WatchlistView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["items"] = [HomeView._decorate_up_next_item(item) for item in context["items"]]
         context["watchlist_statuses"] = WatchlistItem.Status.choices
         return context
 
