@@ -96,6 +96,15 @@
           window.setTimeout(() => card?.remove(), 220);
           announce("Removed from My List.");
         } else if (action === "add") {
+          if (form.matches("[data-hero-watchlist]")) {
+            const saved = document.createElement("a");
+            saved.className = "button secondary is-saved";
+            saved.href = "/my-watchlist/";
+            saved.textContent = "✓ In My List";
+            form.replaceWith(saved);
+            announce("Added to My List.");
+            return;
+          }
           const summary = document.createElement("div");
           summary.className = "detail-progress-summary";
           summary.dataset.detailProgress = "";

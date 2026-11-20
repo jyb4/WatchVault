@@ -238,7 +238,11 @@ class HomeView(ListView):
             "-editorial_priority", F("external_rating").desc(nulls_last=True), "title"
         )[:20]
         context["continue_watching_items"] = []
+        context["watchlist_show_ids"] = set()
         if self.request.user.is_authenticated:
+            context["watchlist_show_ids"] = set(WatchlistItem.objects.filter(
+                user=self.request.user
+            ).values_list("show_id", flat=True))
             items = WatchlistItem.objects.filter(
                 user=self.request.user,
                 status=WatchlistItem.Status.WATCHING,
